@@ -39,7 +39,7 @@ function hero(title, text, image = '/assets/jebediah.png') {
 const testCode = `<div class="test-code"><img src="/qr/test.svg" alt="Scanner test QR, payload TEST WAND"><div><p class="eyebrow">WAND CHECK</p><h2>Give it a test blast.</h2><p>Point your wand at the code. We’ll light up your color when it connects.</p></div></div>`;
 function shell() {
   if (view === 'home') {
-    app.innerHTML = hero('Ghostbusters in<br>the pumpkin patch.', 'Our patch is haunted. Our wands are charged. Let’s save Halloween.') +
+    app.innerHTML = hero("Save Jebediah Crow's<br>pumpkin patch.", 'Our patch is haunted. Our wands are charged. Let’s save Halloween.') +
       `<section class="launch-grid"><a class="tile" href="/?view=referee"><span>01 / CONTROL</span><h2>Referee desk ↗</h2><p>Names, wand checks, and round controls.</p></a><a class="tile" href="/?view=station"><span>02 / CONNECT</span><h2>Wand station ↗</h2><p>Staff setup for a paired scanner.</p></a><a class="tile" href="/?view=leaderboard"><span>03 / DISPLAY</span><h2>Live leaderboard ↗</h2><p>Put your ghost hunters on the big screen.</p></a><a class="tile" href="/?view=intro"><span>04 / WELCOME</span><h2>Meet Jebediah ↗</h2><p>Orientation and scanner testing.</p></a><a class="tile" href="/?view=targets"><span>05 / PROJECT</span><h2>Digital ghosts ↗</h2><p>Three stationary targets for a screen or projector.</p></a><a class="tile" href="/?view=atmosphere"><span>06 / HAUNT</span><h2>Atmosphere ↗</h2><p>A floating ghost for ceilings and corners.</p></a></section><p class="footnote"><a href="/print.html">Print ghost targets, chest badges, or a test target ↗</a></p>`;
   } else if (view === 'referee') {
     app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE PATCH</p><h1>Meet your ghost patrol.</h1><p>Tell Jebediah your name, then test your wand.</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
@@ -186,5 +186,6 @@ setInterval(() => {
     const ms = state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
     const sec = Math.ceil(ms/1000); $('clock').textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
   }
-  if (lastGood && Date.now() - lastGood > 6000) { $('connection').textContent = 'Connection interrupted · scores may be delayed'; $('connection').className = 'offline'; }
+  const staleAfter = view === 'station' ? 10000 : 35000;
+  if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection interrupted · scores may be delayed'; $('connection').className = 'offline'; }
 }, 250);
