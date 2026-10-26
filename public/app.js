@@ -1,13 +1,23 @@
 import { createScanner } from '/scanner.js';
 import { connectGameUpdates } from '/realtime.js';
+import { icon } from '/icons.js?v=haunt-20261026-1';
 
-const colors = ['Red', 'Green', 'Blue', 'Yellow', 'White', 'Black'];
-const stations = ['North', 'Central', 'East', 'west', 'south', 'southwest', 'drewPC'];
+const stationColors = {
+  joshdesk: 'Black',
+  barbdesk: 'White',
+  center: 'Blue',
+  studentprimary: 'Red',
+  north: 'Yellow',
+  east: 'Green'
+};
+const colors = Object.values(stationColors);
+const stations = Object.keys(stationColors);
 const $ = id => document.getElementById(id);
 const app = $('app');
 const view = new URLSearchParams(location.search).get('view') || 'home';
+document.body.classList.add(`${view}-view`);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const options = items => items.map(s => `<option>${esc(s)}</option>`).join('');
+const options = items => items.map((s,i) => `<option value="${esc(s)}"${i === 0 ? ' selected' : ''}>${esc(s)}</option>`).join('');
 let state = null, lastGood = 0, offset = 0, staffOpen = false;
 let staffToken = sessionStorage.getItem('gp-staff') || '';
 let playerToken = localStorage.getItem('gp-player') || '';
@@ -33,20 +43,30 @@ async function api(data, token = '') {
 async function staffAction(action, extra = {}) {
   try { return await api({ action, ...extra }, staffToken); } catch (e) { toast(e.message); return null; }
 }
-function hero(title, text, image = '/assets/jebediah.png') {
-  return `<section class="hero"><div class="hero-copy"><p class="eyebrow">JEBEDIAH CROW NEEDS YOU</p><h1>${title}</h1><p class="lead">${text}</p></div><div class="portrait"><img src="${image}" alt="Jebediah Crow, a smiling scarecrow"></div></section>`;
+function hero(title, text, image = '/assets/jebediah-welcome.webp') {
+  return `<section class="hero"><div class="hero-copy"><p class="eyebrow">JEBEDIAH CROW NEEDS YOU</p><h1>${title}</h1><p class="lead">${text}</p></div><div class="hero-art"><span class="orbit" aria-hidden="true"></span><img id="hero-character" src="${image}" alt="Jebediah Crow, a smiling scarecrow" fetchpriority="high" width="1024" height="1536"></div></section>`;
 }
-const testCode = `<div class="test-code"><img src="/qr/test.svg" alt="Scanner test QR, payload TEST WAND"><div><p class="eyebrow">WAND CHECK</p><h2>Give it a test blast.</h2><p>Point your wand at the code. We’ll light up your color when it connects.</p></div></div>`;
+const testCode = `<div class="test-code"><div class="qr-frame"><img src="/qr/test.svg" alt="Scanner test QR, payload TEST WAND" width="300" height="300"></div><div><p class="eyebrow">BLASTER CHECK</p><h2>Give it a test fire.</h2><p>Point your blaster at the code. Lights up when connected</p></div></div>`;
+function launchTile(target, symbol, title, description) {
+  return `<a class="tile" href="/?view=${target}"><span class="tile-icon">${icon(symbol)}</span><h2>${title}</h2><p>${description}</p>${icon('arrow', 'tile-arrow')}</a>`;
+}
 function shell() {
   if (view === 'home') {
-    app.innerHTML = hero("Save Jebediah Crow's<br>pumpkin patch.", 'Our patch is haunted. Our wands are charged. Let’s save Halloween.') +
-      `<section class="launch-grid"><a class="tile" href="/?view=referee"><span>01 / CONTROL</span><h2>Referee desk ↗</h2><p>Names, wand checks, and round controls.</p></a><a class="tile" href="/?view=station"><span>02 / CONNECT</span><h2>Wand station ↗</h2><p>Staff setup for a paired scanner.</p></a><a class="tile" href="/?view=leaderboard"><span>03 / DISPLAY</span><h2>Live leaderboard ↗</h2><p>Put your ghost hunters on the big screen.</p></a><a class="tile" href="/?view=intro"><span>04 / WELCOME</span><h2>Meet Jebediah ↗</h2><p>Orientation and scanner testing.</p></a><a class="tile" href="/?view=targets"><span>05 / PROJECT</span><h2>Digital ghosts ↗</h2><p>Three stationary targets for a screen or projector.</p></a><a class="tile" href="/?view=atmosphere"><span>06 / HAUNT</span><h2>Atmosphere ↗</h2><p>A floating ghost for ceilings and corners.</p></a></section><p class="footnote"><a href="/print.html">Print ghost targets, chest badges, or a test target ↗</a></p>`;
+    app.innerHTML = hero('Ghosts have<br>taken over our<br>pumpkin patch!', 'Grab a blaster! Let’s save Halloween.') +
+      `<section class="launch-grid" aria-label="Game screens">${[
+        launchTile('referee', 'setup', 'Setup Station', 'Names, wand checks, and round controls.'),
+        launchTile('station', 'blaster', 'Wand station', 'Scanner pairing'),
+        launchTile('leaderboard', 'trophy', 'Live leaderboard', 'Show Leaderboard'),
+        launchTile('intro', 'pumpkin', 'Meet Jebediah', 'Orientation and testing'),
+        launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
+        launchTile('atmosphere', 'moon', 'Atmosphere', 'A floating ghost for ceilings and corners.')
+      ].join('')}</section><p class="footnote"><a href="/print.html">${icon('printer')}Print ghost targets, chest badges, or a test target</a></p>`;
   } else if (view === 'referee') {
-    app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE PATCH</p><h1>Meet your ghost patrol.</h1><p>Tell Jebediah your name, then test your wand.</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
+    app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE OIT MATERIALS MANAGEMENT HALLOWEEN PUMPKIN PATCH</p><h1>You are professional ghost busters!</h1><p>Enter your name and test your blaster</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
       <section id="staff-panel" class="panel" hidden>
         <form id="login"><label>Staff passphrase<input id="staff-secret" type="password" autocomplete="current-password" required></label><button>Unlock controls</button></form>
-        <div id="unlocked" hidden><div class="control-row"><label class="switch"><input id="pvp" type="checkbox"> Enable surprise PvP finale</label><span class="muted">Private round setting · editable in lobby</span></div><div class="control-row"><button id="start">Start round</button><button id="finish" class="quiet">End round</button><button id="new-round" class="quiet">Next group</button><button id="reset" class="danger">Reset lobby & release all</button><button id="lock" class="quiet">Sign out</button></div><p class="muted" id="timing-note"></p></div>
-      </section><section class="referee-grid"><div class="panel"><div class="section-head"><h2>Your patrol</h2><span id="round-status" class="tag">Lobby</span></div><div id="roster"></div></div><div class="panel">${testCode}</div></section>`;
+        <div id="unlocked" hidden><div class="control-row"><label class="switch"><input id="pvp" type="checkbox"> Enable finale</label><span class="muted">Private round setting · editable in lobby</span></div><div class="control-row"><button id="start">Start round</button><button id="finish" class="quiet">End round</button><button id="new-round" class="quiet">Next group</button><button id="reset" class="danger">Reset lobby & release all</button><button id="lock" class="quiet">Sign out</button></div><p class="muted" id="timing-note"></p></div>
+      </section><section class="referee-grid"><div class="panel"><div class="section-head"><h2>Your team</h2><span id="round-status" class="tag">Blaster checking...</span></div><div id="roster"><p id="empty-roster" class="muted">Connect blasters to begin</p></div></div><div class="panel">${testCode}</div></section>`;
     $('staff-toggle').onclick = () => { staffOpen = !staffOpen; $('staff-panel').hidden = !staffOpen; $('staff-toggle').textContent = staffOpen ? 'Return to welcome screen' : 'Staff controls'; render(); };
     $('login').onsubmit = async e => {
       e.preventDefault();
@@ -59,12 +79,14 @@ function shell() {
     $('new-round').onclick = () => { if (confirm('Clear names and scores for the next group? Station connections will stay assigned.')) staffAction('newRound'); };
     $('reset').onclick = () => { if (confirm('Release every color and disconnect all wand stations?')) staffAction('reset'); };
   } else if (view === 'station') {
-    app.innerHTML = `<section class="station"><p class="eyebrow">NEUTRON WAND LINK</p><h1 id="station-title">Connect your wand.</h1><section id="pair-panel" class="panel"><p>Staff: select this computer and its scanner color. Players will enter names at the referee desk.</p><form id="pair"><label>Computer<select id="station">${options(stations)}</select></label><label>Scanner color<select id="color">${options(colors)}</select></label><label>Staff passphrase<input id="pair-secret" type="password" required autocomplete="current-password"></label><button>Connect station</button></form></section><div id="linked" hidden><img class="wand" src="/assets/scanner.png" alt="Glowing neutron wand"><p id="station-name" class="lead"></p><p id="scanner-feedback" class="scan-feedback" aria-live="polite"></p><p id="focus-note" class="tag"></p><div class="station-actions"><button id="focus" class="quiet">Arm scanner capture</button><button id="leave" class="quiet">Leave station</button></div><p class="muted">Keep this browser window active. Unknown codes are ignored.</p></div></section>`;
+    app.innerHTML = `<section class="station"><div class="station-head"><p class="eyebrow">NEUTRON BLASTER LINK</p><h1 id="station-title">Connect your blaster</h1></div><div class="station-stage"><div class="station-art"><img src="/assets/scanner.webp" alt="Glowing neutron blaster" width="650" height="650"></div><section id="pair-panel" class="panel"><p>Select this computer. Its assigned scanner color is shown automatically. Players will enter names at hub device.</p><form id="pair"><label>Computer<select id="station">${options(stations)}</select></label><label>Scanner color<input id="color" readonly></label><label>Staff password<input id="pair-secret" type="password" required autocomplete="current-password"></label><button>${icon('link', 'icon-small')}Connect station</button></form></section><div id="linked" class="panel" hidden><p id="station-name" class="station-name"></p><p id="scanner-feedback" class="scan-feedback" aria-live="polite"></p><p id="focus-note" class="tag"></p><div class="station-actions"><button id="focus" class="quiet">${icon('target', 'icon-small')}Arm your scanner</button><button id="leave" class="quiet">Leave station</button></div><p class="muted">Keep this browser window active.</p></div></div></section>`;
+    $('station').onchange = () => { $('color').value = stationColors[$('station').value]; };
+    $('color').value = stationColors[$('station').value];
     $('pair').onsubmit = async e => {
       e.preventDefault();
       try {
         const login = await api({ action: 'login', secret: $('pair-secret').value });
-        const r = await api({ action: 'claim', color: $('color').value, station: $('station').value }, login.token);
+        const r = await api({ action: 'claim', color: stationColors[$('station').value], station: $('station').value }, login.token);
         playerToken = r.token; localStorage.setItem('gp-player', playerToken); $('pair-secret').value = ''; document.activeElement?.blur(); render();
       } catch (e) { toast(e.message); }
     };
@@ -84,14 +106,14 @@ function shell() {
     });
     window.addEventListener('focus', render); window.addEventListener('blur', render);
   } else if (view === 'intro') {
-    app.innerHTML = hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron wand, tell us your name, and give it a test blast. Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR GHOST PATROL</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div>`;
+    app.innerHTML = hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div>`;
   } else if (view === 'leaderboard') {
-    app.innerHTML = `<section class="score-header"><div><p class="eyebrow">JEBEDIAH’S GHOST PATROL</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><section id="standings" class="standings"></section><section class="vanquished" id="vanquished"></section><div class="ticker"><span class="pulse"></span><span id="latest">Choose your wand and meet Jebediah.</span></div>`;
+    app.innerHTML = `<section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><section id="standings" class="standings"></section><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div>`;
   } else if (view === 'targets') {
-    app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map(id=>`<article><div class="ghost-shape">● ●<span>﹏</span></div><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code"><h2>Ghost ${id}</h2></article>`).join('')}</section>`;
+    app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map((id,i)=>`<article><span class="ghost-sprite ghost-${i}" aria-hidden="true"></span><div class="qr-frame"><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code" width="330" height="330"></div><h2>Ghost ${id}</h2></article>`).join('')}</section><img id="target-reaction" class="target-reaction" src="/assets/jebediah-alert.webp" alt="Jebediah reacting to the ghosts" hidden>`;
   } else if (view === 'atmosphere') {
     document.body.classList.add('atmosphere');
-    app.innerHTML = `<div class="haunt"><img src="/assets/ghost.png" alt="A floating gauze ghost with green streamers and an orange pumpkin"></div><div class="mist"></div>`;
+    app.innerHTML = `<div class="haunt"><img src="/assets/atmosphere-ghost.webp" alt="A floating gauze ghost with green streamers and an orange pumpkin"></div><div class="mist"></div>`;
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -99,13 +121,14 @@ function playerColor() {
 }
 function render() {
   if (!state) return;
+  document.body.dataset.phase = state.phase;
   const lobby = state.phase === 'lobby';
   if (view === 'referee') {
     $('login').hidden = !!staffToken; $('unlocked').hidden = !staffToken;
     $('pvp').disabled = !lobby;
     if (state.pvpEnabled !== undefined) $('pvp').checked = state.pvpEnabled;
     $('timing-note').textContent = '5 min hunt + 1 min finale when enabled; 6 min hunt otherwise. Tie timing uses server receipts; office accuracy is unverified.';
-    $('round-status').textContent = ({ lobby: 'Wand check', pve: 'Hunting ghosts', pvp: 'Final showdown', results: 'Round complete' })[state.phase];
+    $('round-status').textContent = ({ lobby: 'Blaster checking...', pve: 'Hunting ghosts', pvp: 'Final showdown', results: 'Round complete' })[state.phase];
     // Stable controls: do not replace a focused name field while polling.
     for (const color of colors) {
       const p = state.players.find(p => p.color === color);
@@ -113,7 +136,7 @@ function render() {
       if (!p) { row?.remove(); continue; }
       if (!row) {
         row = document.createElement('div'); row.id = `row-${color}`; row.className = 'roster-row';
-        row.innerHTML = `<span class="swatch ${color.toLowerCase()}"></span><div class="roster-info"><strong>${color}</strong><small class="player-meta"></small></div><form class="name-form"><input aria-label="${color} player name" maxlength="24" placeholder="Display name" required><button>Save</button></form><span class="readiness"></span><button class="release quiet" aria-label="Release ${color}">×</button>`;
+        row.innerHTML = `<span class="swatch ${color.toLowerCase()}"></span><div class="roster-info"><strong>${color}</strong><small class="player-meta"></small></div><form class="name-form"><input aria-label="${color} player name" maxlength="24" placeholder="Player Name" required><button>Save</button></form><span class="readiness"></span><button class="release quiet" aria-label="Release ${color}">×</button>`;
         row.querySelector('form').onsubmit = async e => { e.preventDefault(); const r = await staffAction('name', { color, name: row.querySelector('input').value }); if (r) toast('Name saved.'); };
         row.querySelector('.release').onclick = () => { if (confirm(`Release the ${color} station?`)) staffAction('release', { color }); };
         $('roster').append(row);
@@ -124,37 +147,45 @@ function render() {
       row.querySelector('button').disabled = !staffToken || !lobby;
       row.querySelector('.release').hidden = !staffOpen || !staffToken || !lobby;
       row.querySelector('.player-meta').textContent = `${p.station}${p.connected ? '' : ' · disconnected'}`;
-      row.querySelector('.readiness').textContent = p.vanquished ? 'Vanquished' : p.ready ? '✓ Wand tested' : 'Test wand';
+      row.querySelector('.readiness').textContent = p.vanquished ? 'Ghost vanquished!' : p.ready ? '✓ Blaster tested' : 'Test blaster';
     }
-    if (!state.players.length && !$('empty-roster')) $('roster').innerHTML = '<p id="empty-roster" class="muted">Staff: connect a wand station to begin.</p>';
+    if (!state.players.length && !$('empty-roster')) $('roster').innerHTML = '<p id="empty-roster" class="muted">Connect blasters to begin</p>';
     if (state.players.length) $('empty-roster')?.remove();
   }
   if (view === 'station') {
     const p = state.players.find(p => p.color === playerColor());
     $('pair-panel').hidden = !!playerToken; $('linked').hidden = !playerToken;
-    $('station-title').textContent = playerToken ? `${p?.color || 'Your'} wand connected.` : 'Connect your wand.';
+    $('station-title').textContent = playerToken ? `${p?.color || 'Your'} blaster connected.` : 'Connect your blaster';
     if (playerToken) {
-      $('station-name').textContent = `${p?.name || 'Name entry at the referee desk'} · ${p?.station || 'Reconnecting'}`;
-      $('scanner-feedback').textContent = p?.vanquished ? 'Vanquished · your patrol thanks you.' : feedback;
-      $('focus-note').textContent = document.hasFocus() ? '● Scanner capture armed' : '⚠ Window inactive · staff must restore focus';
+      $('linked').dataset.ready = String(!!p?.ready);
+      $('station-name').textContent = `${p?.name || 'Name entry at hub'} · ${p?.station || 'Reconnecting'}`;
+      $('scanner-feedback').textContent = p?.vanquished ? 'Vanquished! Good Job!' : feedback;
+      $('focus-note').textContent = document.hasFocus() ? '● Scanner capture armed' : '⚠ Window inactive · restore focus';
     }
   }
   if (view === 'intro') {
-    $('intro-roster').innerHTML = state.players.length ? state.players.map(p=>`<div class="intro-player"><span class="swatch ${p.color.toLowerCase()}"></span><strong>${esc(p.name || p.color)}</strong><span>${p.ready ? '✓ Ready' : 'Test your wand'}</span></div>`).join('') : '<p>Your patrol is assembling…</p>';
+    const character = $('hero-character');
+    const art = state.phase === 'pvp' ? 'alert' : state.phase === 'results' ? 'victory' : 'welcome';
+    if (character.dataset.art !== art) { character.src = `/assets/jebediah-${art}.webp`; character.dataset.art = art; }
+    $('intro-roster').innerHTML = state.players.length ? state.players.map(p=>`<div class="intro-player"><span class="swatch ${p.color.toLowerCase()}"></span><strong>${esc(p.name || p.color)}</strong><span>${p.ready ? '✓ Ready' : 'Test your blaster'}</span></div>`).join('') : '<p>Your team is assembling…</p>';
     $('intro-announcement').hidden = lobby;
-    $('intro-announcement').textContent = state.phase === 'pvp' ? 'The ghosts have possessed your fellow hunters! Scan their chest badges!' : state.phase === 'results' ? 'The round is complete! Check your patrol’s results.' : 'The hunt is on! Find and blast the ghosts around the patch.';
+    const announcement = state.phase === 'pvp' ? 'Ghosts have possessed your fellow hunters! BLAST THEM!' : state.phase === 'results' ? 'The round is complete! Check your results.' : 'The hunt is on! Find and blast the ghosts around the patch.';
+    $('intro-announcement').innerHTML = icon(state.phase === 'results' ? 'trophy' : state.phase === 'pvp' ? 'alert' : 'ghost') + `<span>${announcement}</span>`;
   }
   if (view === 'leaderboard') {
     const players = state.players.filter(p=>p.name);
-    $('standings').innerHTML = players.filter(p=>!p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<article class="score-card ${p.color.toLowerCase()}"><span class="rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><h2>${esc(p.name)}</h2><small>${p.color} wand · ${p.captures} ghosts</small><strong>${p.score.toLocaleString()}</strong><span class="points">POINTS</span></article>`).join('') || '<div class="empty-patch"><img src="/assets/pumpkin.png" alt="Orange pumpkin lantern"><h2>Your patrol is assembling…</h2></div>';
+    $('standings').innerHTML = players.filter(p=>!p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<article class="score-card ${p.color.toLowerCase()}"><span class="rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts</small><strong>${p.score.toLocaleString()}</strong><span class="points">POINTS</span></article>`).join('') || '<div class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></div>';
     $('vanquished').innerHTML = players.filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
     $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
     $('phase-label').textContent = ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
-    $('latest').textContent = state.log.at(-1)?.message || 'Choose your wand and meet Jebediah.';
+    $('latest').textContent = state.log.at(-1)?.message || 'Choose your blaster and get instructions';
   }
   if (view === 'targets') {
-    $('target-phase').textContent = state.phase === 'pvp' ? 'The ghosts have moved! Scan your opponents’ chest badges.' : state.phase === 'results' ? 'Round complete. Thank you, ghost patrol!' : 'Each ghost is worth 100 points. Capture each one once.';
+    $('target-phase').textContent = state.phase === 'pvp' ? 'The ghosts have possessed your teammates! Scan their chest badges!' : state.phase === 'results' ? 'Round complete. Thank you, ghost patrol!' : 'Each ghost is worth 100 points. Capture each one once.';
     document.querySelector('.digital-targets').classList.toggle('inactive', state.phase === 'pvp' || state.phase === 'results');
+    $('target-reaction').hidden = !['pvp', 'results'].includes(state.phase);
+    const reactionArt = state.phase === 'results' ? 'victory' : 'alert';
+    if ($('target-reaction').dataset.art !== reactionArt) { $('target-reaction').src = `/assets/jebediah-${reactionArt}.webp`; $('target-reaction').dataset.art = reactionArt; }
   }
 }
 async function poll() {
@@ -165,7 +196,7 @@ async function poll() {
     if (view === 'station' && playerToken) await api({ action: 'heartbeat' }, playerToken);
     else await api(null, view === 'referee' && staffOpen ? staffToken : '');
   } catch(e) {
-    $('connection').textContent = e.message; $('connection').className = 'offline';
+    $('connection').textContent = 'Connection issue'; $('connection').className = 'offline';
     if (e.status === 401) {
       if (view === 'station') { playerToken = ''; localStorage.removeItem('gp-player'); }
       else { staffToken = ''; sessionStorage.removeItem('gp-staff'); }
@@ -176,6 +207,7 @@ async function poll() {
     if (pendingPoll) { pendingPoll = false; queueMicrotask(poll); }
   }
 }
+$('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
 $('fullscreen').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } };
 shell();
 connectGameUpdates(globalThis.io, poll);
@@ -185,7 +217,11 @@ setInterval(() => {
   if ($('clock') && state) {
     const ms = state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
     const sec = Math.ceil(ms/1000); $('clock').textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
+    $('clock').closest('.clock').classList.toggle('is-urgent', ms > 0 && ms <= 30000 && state.phase !== 'lobby');
   }
+  // Referee and display views intentionally poll every 15 seconds when no
+  // Socket.IO event arrives. Allow two poll intervals plus some jitter before
+  // declaring the connection stale; stations heartbeat every 2 seconds.
   const staleAfter = view === 'station' ? 10000 : 35000;
-  if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection interrupted · scores may be delayed'; $('connection').className = 'offline'; }
+  if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection issue'; $('connection').className = 'offline'; }
 }, 250);

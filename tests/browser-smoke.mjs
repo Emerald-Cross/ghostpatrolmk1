@@ -22,7 +22,7 @@ try {
   await ref.waitForTimeout(1000);
   await ref.locator('#pvp').uncheck();
   await station.goto(base+'/?view=station');
-  await station.locator('#station').selectOption('North');await station.locator('#color').selectOption('Red');
+  await station.locator('#station').selectOption('studentprimary');
   await station.locator('#pair-secret').fill(secret);await station.getByRole('button',{name:'Connect station'}).click();
   await station.locator('#linked').waitFor({state:'visible'});
   await ref.getByLabel('Red player name').fill('Test Hunter');

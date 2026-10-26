@@ -1,9 +1,39 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ghost Patrol Targets</title>
-<style>
-body{font-family:system-ui,sans-serif;background:#e9e5dc;color:#241c32;margin:0}nav{padding:22px;display:flex;gap:15px;flex-wrap:wrap;align-items:center}nav a{color:inherit}button{padding:10px 18px;cursor:pointer}.sheet{width:8.5in;height:11in;box-sizing:border-box;background:white;margin:20px auto;padding:.5in;display:flex;flex-direction:column;align-items:center;justify-content:center;page-break-after:always;break-after:page}.sheet h1{font-size:34pt;margin:0 0 .2in}.sheet .qr{width:7.2in;max-height:7.2in}.sheet p{font-size:16pt;margin:.2in 0 0}.ornament{color:#624289;font-size:24pt;letter-spacing:18px;margin-bottom:.25in}.color{display:block;font-size:28pt;font-weight:bold}.red{border-color:#d44c48}.green{border-color:#84a94f}.blue{border-color:#4b75ba}.yellow{border-color:#e8b734}.white{border-color:#ddd}.black{border-color:#282630}.badge{border-width:.2in;border-style:solid}.badge .qr{width:6.6in}.sheet:last-child{break-after:auto;page-break-after:auto}@page{size:letter portrait;margin:0}@media print{nav{display:none}.sheet{margin:0}}@media screen and (max-width:850px){.sheet{width:95vw;height:auto;min-height:120vw;padding:5vw}.sheet .qr{width:85vw}.badge .qr{width:75vw}.sheet h1{font-size:8vw}}
-</style></head><body><nav><a href="/">← Session chooser</a><a href="?kind=ghosts">15 physical ghosts</a><a href="?kind=badges">6 chest badges</a><a href="?kind=test">Wand test</a><button onclick="print()">Print selected targets</button><span>Letter paper · 100% scale · one sided</span></nav><main id="sheets"></main><script>
-const kind=new URLSearchParams(location.search).get('kind')||'test';
-const colors=['Red','Green','Blue','Yellow','White','Black'];
-const targets=kind==='ghosts'?Array.from({length:15},(_,i)=>({title:'Ghost '+(i+1),file:'ghost-'+(i+1),note:'100 points · One capture per hunter'})):kind==='badges'?colors.map(color=>({title:color,file:'player-'+color.toLowerCase(),badge:color.toLowerCase()})):[{title:'Wand check',file:'test',note:'Scan here to test your neutron wand'}];
-document.getElementById('sheets').innerHTML=targets.map(t=>`<section class="sheet ${t.badge?'badge '+t.badge:''}">${!t.badge?'<div class="ornament">✦ ☾ ✦</div>':''}<h1>${t.title}</h1><img class="qr" src="/qr/${t.file}.svg" alt="${t.title} QR code">${t.note?'<p>'+t.note+'</p>':''}</section>`).join('');
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ghost Patrol Targets</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/print.css?v=haunt-20261026-1">
+</head>
+<body>
+  <nav aria-label="Printable targets">
+    <a href="/">← Session chooser</a>
+    <a href="?kind=ghosts">15 physical ghosts</a>
+    <a href="?kind=badges">6 chest badges</a>
+    <a href="?kind=test">Wand test</a>
+    <button onclick="print()">Print selected targets</button>
+    <span>Letter paper · 100% scale · one sided</span>
+  </nav>
+  <main id="sheets"></main>
+  <script type="module">
+    import { icon } from '/icons.js?v=haunt-20261026-1';
+    const kind = new URLSearchParams(location.search).get('kind') || 'test';
+    const colors = ['Black','White','Blue','Red','Yellow','Green'];
+    const targets = kind === 'ghosts'
+      ? Array.from({length:15},(_,i)=>({ title:'Ghost '+(i+1), file:'ghost-'+(i+1), ghost:i%3, note:'100 points · One capture per hunter' }))
+      : kind === 'badges'
+        ? colors.map(color=>({ title:color, file:'player-'+color.toLowerCase(), badge:color.toLowerCase() }))
+        : [{ title:'Wand check', file:'test', note:'Scan here to test your scanner blaster' }];
+    document.getElementById('sheets').innerHTML = targets.map(t=>`
+      <section class="sheet ${t.badge ? 'badge '+t.badge : ''}">
+        <header class="target-header">
+          ${t.ghost !== undefined ? `<span class="ghost-sprite ghost-${t.ghost}" aria-hidden="true"></span>` : `<span class="print-mark" aria-hidden="true">${icon(t.badge ? 'ghost' : 'blaster')}</span>`}
+          <h1>${t.title}</h1>
+        </header>
+        <div class="print-code"><img class="qr" src="/qr/${t.file}.svg" alt="${t.title} QR code" width="700" height="700"></div>
+        ${t.note ? '<p>'+t.note+'</p>' : '<div class="badge-stripe" aria-hidden="true"></div>'}
+      </section>`).join('');
+  </script>
+</body>
+</html>

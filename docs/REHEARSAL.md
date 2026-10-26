@@ -3,7 +3,7 @@
 ## First milestone
 
 - [ ] Start the local prototype or configure the shared backend and deploy.
-- [ ] On North in Chrome, pair one S740 and connect a color.
+- [ ] On `north` in Chrome, pair the Yellow scanner.
 - [ ] On the iPhone, save a name; confirm the private mode toggle is hidden during name entry.
 - [ ] Scan the referee’s test QR. If screens cannot scan reliably, print the test target instead.
 - [ ] With PvP off, start a one-player round. Scan Ghost 1 and see 100 points on another display.
@@ -13,7 +13,7 @@
 
 ## Six-player rehearsal
 
-- [ ] Choose six of the named workstations and map each to one color.
+- [ ] Pair each workstation with its assigned scanner: `joshdesk` Black, `barbdesk` White, `center` Blue, `studentprimary` Red, `north` Yellow, and `east` Green.
 - [ ] Confirm the scanners send complete known payloads followed by Enter without prefixes.
 - [ ] Test range, angle, paper curl, print quality, dark corners, light reflections, and multiple nearby codes.
 - [ ] Print all 15 ghost pages and six chest badges at letter size, single sided. Preserve white QR margins.

@@ -21,7 +21,7 @@ test('Render server wiring serves health, static content, API, and private-safe 
     const health = await fetch(`${base}/healthz`);
     assert.equal(health.status, 200); assert.equal(await health.text(), 'ok');
     assert.equal(health.headers.get('x-frame-options'), 'DENY');
-    assert.match(await (await fetch(base)).text(), /Ghost Patrol/);
+    assert.match(await (await fetch(base)).text(), /Ghosts in the Materials Pumpkin Patch!/);
     const initial = await (await fetch(`${base}/api/game`)).json();
     assert.equal(initial.state.phase, 'lobby');
     assert.deepEqual(SocketIOServerStandin.instance.events.at(-1), { name: 'game:changed', args: [] });
@@ -30,7 +30,7 @@ test('Render server wiring serves health, static content, API, and private-safe 
     assert.equal(SocketIOServerStandin.instance.events.length, eventCount, 'unchanged polling does not loop realtime notifications');
     const login = await fetch(`${base}/api/game`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'login', secret: 'test-referee-passphrase' }) });
     const token = (await login.json()).token;
-    await fetch(`${base}/api/game`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'claim', color: 'Red', station: 'North' }) });
+    await fetch(`${base}/api/game`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify({ action: 'claim', color: 'Red', station: 'studentprimary' }) });
     assert.equal(SocketIOServerStandin.instance.events.at(-1).name, 'game:changed');
     assert.deepEqual(SocketIOServerStandin.instance.events.at(-1).args, [], 'socket notifications carry no game or referee data');
   } finally { await new Promise(resolve => runtime.server.close(resolve)); }

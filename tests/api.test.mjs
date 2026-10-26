@@ -20,7 +20,7 @@ test('HTTP multi-session trial: setup, scan, shared scoreboard, secrecy, reset',
     const admin=(await call({action:'login',secret:'test-referee-passphrase'})).body.token;
     assert.equal((await call({action:'settings',pvpEnabled:false},admin,'http://evil.example')).status,403);
     await call({action:'settings',pvpEnabled:false},admin);
-    const joined=(await call({action:'claim',color:'Red',station:'North'},admin)).body;
+    const joined=(await call({action:'claim',color:'Red',station:'studentprimary'},admin)).body;
     const token=joined.token; const roundId=joined.state.roundId;
     await call({action:'name',color:'Red',name:'Matt'},admin);
     await call({action:'scan',payload:'TEST WAND',roundId,eventId:'wand-test-1'},token);
@@ -38,8 +38,8 @@ test('HTTP multi-session trial: setup, scan, shared scoreboard, secrecy, reset',
 
 test('six concurrent player updates survive CAS conflicts with exactly-once scoring',async()=>{
   const store=memoryStore(), ref={role:'referee'}, claims={};
-  for(const [i,color] of ['Red','Green','Blue','Yellow','White','Black'].entries()) {
-    const result=await transact(store,s=>apply(s,'claim',{color,station:['North','Central','East','west','south','southwest'][i]},ref,1000));
+  for(const [i,color] of ['Black','White','Blue','Red','Yellow','Green'].entries()) {
+    const result=await transact(store,s=>apply(s,'claim',{color,station:['joshdesk','barbdesk','center','studentprimary','north','east'][i]},ref,1000));
     claims[color]=result.output.token;
     await transact(store,s=>apply(s,'name',{color,name:color},ref,1001));
     await transact(store,s=>apply(s,'scan',{payload:'TEST WAND',eventId:`test-id-${color}`,roundId:s.roundId},claims[color],1002));

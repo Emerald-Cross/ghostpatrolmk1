@@ -1,4 +1,4 @@
-# Ghostbusters in the Pumpkin Patch
+# Ghosts in the Materials Pumpkin Patch!
 
 First playable prototype for the October 28, 2026 department Halloween event.
 
@@ -29,7 +29,7 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 
 1. Open `/?view=referee` on the iPhone. Tap **Staff controls** and unlock with your passphrase.
 2. Privately turn off the surprise PvP finale for the one-player trial. Tap **Return to welcome screen**. The player-facing setup contains no finale setting.
-3. On a scanner’s workstation, open `/?view=station`. Staff select its computer name and scanner color, enter the passphrase, and connect. The browser stores a signed player token, not the staff passphrase.
+3. On a scanner’s workstation, open `/?view=station`. Select its computer name; the assigned scanner color appears automatically. Enter the passphrase and connect. The browser stores a signed player token, not the staff passphrase.
 4. On the referee screen, enter and save the player’s name. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
 5. On a separate display, open `/?view=leaderboard`. Start the round from private staff controls.
 6. Open `/print.html?kind=ghosts` and print Ghost 1. Scan it: the player gets **100 points**. Scan it again: the score stays **100**. A second player may score that same ghost independently.
@@ -56,8 +56,7 @@ Use the full screen button on desktop. iPhone Safari support must be verified on
 
 ## Rules implemented
 
-- Six player colors: Red, Green, Blue, Yellow, White, Black. Color is distinct from computer identity.
-- Primary stations: North, Central, East, west. Extra choices: south, southwest, drewPC. One scanner/color per active station; at most six colors.
+- Six paired scanner workstations, in order: `joshdesk` = Black, `barbdesk` = White, `center` = Blue, `studentprimary` = Red, `north` = Yellow, `east` = Green. The station page selects the assigned color automatically.
 - Each `Ghost 1` through `Ghost 18` awards **100 points once per player per round**. No cooldown between different players.
 - PvP enabled: five minutes of ghost hunting, then a one-minute surprise finale. Disabled: six minutes of ghost hunting. Setup happens before the timer starts.
 - Only a referee can set the finale, and only in the lobby. Public state never contains that setting. Public countdowns show the same six-minute total either way.
@@ -101,3 +100,7 @@ The development environment could not download Chromium because its download hos
 This is a functional first prototype with static orientation text and an atmosphere animation. It does not yet include audio cues, recorded Jebediah narration, pausing, or a pre-round countdown. Joining and releasing stations are lobby-only; a disconnected player can reconnect with the same valid token. “Next group” keeps assignments; full reset releases them. The referee can end a round early but cannot change its mode mid-round. One shared game room is supported.
 
 Original art is included verbatim from the user’s seven attachments. `scripts/prepare-assets.py` regenerates QR SVGs with ReportLab and optionally recopies originals from a sibling `upload` directory. Committed SVGs work without Python at runtime. Keep QR quiet zones clear; decoration stays outside the code.
+
+## Visual direction
+
+The interface uses a dark illustrated pumpkin patch, large locally hosted spooky headings, and a restrained palette. See [ART-DIRECTION.md](docs/ART-DIRECTION.md) for the asset inventory, production rules, and current review limits.

@@ -7,8 +7,9 @@ const ref = { role: 'referee' };
 function setup(pvp = true, count = 2) {
   const s = initialState(), auth = {};
   apply(s, 'settings', { pvpEnabled: pvp }, ref, 1000);
-  for (const [i, color] of ['Red','Blue','Green','Yellow','White','Black'].slice(0, count).entries()) {
-    auth[color] = apply(s, 'claim', { color, station: ['North','Central','East','west','south','southwest'][i] }, ref, 1000).token;
+  for (const color of ['Red','Blue','Green','Yellow','White','Black'].slice(0, count)) {
+    const station = { Black:'joshdesk', White:'barbdesk', Blue:'center', Red:'studentprimary', Yellow:'north', Green:'east' }[color];
+    auth[color] = apply(s, 'claim', { color, station }, ref, 1000).token;
     apply(s, 'name', { color, name: color+' Hunter' }, ref, 1000);
     scan(s, auth[color], 'TEST WAND', 1001);
   }
@@ -87,8 +88,9 @@ test('accepted pre-buzzer hit settles; post-buzzer scans cannot score', () => {
 });
 test('staff access, duplicate station claims, readiness, old round and revoked assignment', () => {
   let s=initialState(); assert.throws(()=>apply(s,'settings',{pvpEnabled:false},{role:'public'},1000),/Referee/);
-  const claim=apply(s,'claim',{color:'Red',station:'North'},ref,1000);
-  assert.throws(()=>apply(s,'claim',{color:'Blue',station:'North'},ref,1000),/already/);
+  const claim=apply(s,'claim',{color:'Red',station:'studentprimary'},ref,1000);
+  assert.throws(()=>apply(s,'claim',{color:'Blue',station:'studentprimary'},ref,1000),/assigned color/);
+  assert.throws(()=>apply(s,'claim',{color:'Red',station:'joshdesk'},ref,1000),/assigned color/);
   assert.throws(()=>apply(s,'start',{},ref,1000),/name/);
   const reset=apply(s,'reset',{},ref,1000); s=reset.replacement;
   assert.throws(()=>apply(s,'heartbeat',{},claim.token,1001),/released/);
