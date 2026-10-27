@@ -28,9 +28,15 @@
 
 - [ ] Assign TV 1 to the intro above Jebediah and TV 2 to the leaderboard, or adjust to suit the room.
 - [ ] Aim two atmosphere projectors at suitable ceilings/corners; keep QR targets on a flat scan-friendly surface.
-- [ ] Set aside time to add and test audio cues; the prototype is silent.
+- [ ] Enable sound on one room device; test background music, capture effects, and the western PvP sting at the intended speaker volume.
 - [ ] Keep walkways and exits clear of shelving props, cables, and streamers.
 - [ ] Disable sleep/screensavers on event computers as permitted; keep scanner tabs active.
 - [ ] Check Supabase is active, deployed credentials work, and quotas are sufficient before October 28.
 - [ ] Choose a staff-only passphrase and keep it off public screens and printouts.
 - [ ] Keep paper targets and a manual tally option available for an outage.
+
+## Projection and cutout trial
+
+- [ ] Open scenes 1, 2, and 3 on the actual projectors, use full screen, and let the controls fade.
+- [ ] Confirm all three scenes change when the actual game enters PvP; confirm a finale-disabled round stays in the hunt mood.
+- [ ] Print one ghost at 100%, cut on the dashed outline, and scan it at the planned distance before printing all 15.

@@ -1,6 +1,8 @@
 import { createScanner } from '/scanner.js';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=haunt-20261026-1';
+import { icon } from '/icons.js?v=haunt-20261027-1';
+import { createGameAudio } from '/audio.js?v=haunt-20261027-1';
+import { mountAtmosphere } from '/atmosphere.js?v=haunt-20261027-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -15,6 +17,8 @@ const stations = Object.keys(stationColors);
 const $ = id => document.getElementById(id);
 const app = $('app');
 const view = new URLSearchParams(location.search).get('view') || 'home';
+const requestedScene = Number(new URLSearchParams(location.search).get('scene'));
+const scene = [1,2,3].includes(requestedScene) ? requestedScene : 1;
 document.body.classList.add(`${view}-view`);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const options = items => items.map((s,i) => `<option value="${esc(s)}"${i === 0 ? ' selected' : ''}>${esc(s)}</option>`).join('');
@@ -22,6 +26,11 @@ let state = null, lastGood = 0, offset = 0, staffOpen = false;
 let staffToken = sessionStorage.getItem('gp-staff') || '';
 let playerToken = localStorage.getItem('gp-player') || '';
 let feedback = 'Ready for your next scan.', busy = false, pendingPoll = false;
+let projection, projectionPhase, announcementTimer, controlsTimer;
+const audio = createGameAudio({ music: ['atmosphere','leaderboard','intro'].includes(view), onChange(active) {
+  const button = $('sound-toggle');
+  if (button) { button.textContent = active ? 'Sound on' : 'Enable sound'; button.setAttribute('aria-pressed', String(active)); }
+} });
 function toast(message) { $('toast').textContent = message; $('toast').classList.add('show'); setTimeout(() => $('toast').classList.remove('show'), 4500); }
 async function api(data, token = '') {
   const start = Date.now();
@@ -35,6 +44,7 @@ async function api(data, token = '') {
   lastGood = Date.now();
   if (result.state) {
     state = result.state; offset = state.serverNow - (start + Date.now()) / 2;
+    audio.update(state);
     $('connection').textContent = result.storage === 'local-memory' ? 'Local trial · connected' : 'Connected';
     $('connection').className = 'online'; render();
   }
@@ -59,7 +69,7 @@ function shell() {
         launchTile('leaderboard', 'trophy', 'Live leaderboard', 'Show Leaderboard'),
         launchTile('intro', 'pumpkin', 'Meet Jebediah', 'Orientation and testing'),
         launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
-        launchTile('atmosphere', 'moon', 'Atmosphere', 'A floating ghost for ceilings and corners.')
+        launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.')
       ].join('')}</section><p class="footnote"><a href="/print.html">${icon('printer')}Print ghost targets, chest badges, or a test target</a></p>`;
   } else if (view === 'referee') {
     app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE OIT MATERIALS MANAGEMENT HALLOWEEN PUMPKIN PATCH</p><h1>You are professional ghost busters!</h1><p>Enter your name and test your blaster</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
@@ -97,7 +107,7 @@ function shell() {
     const scanner = createScanner(async (payload, clientMono) => {
       if (!playerToken || !state) return;
       const event = { action: 'scan', payload, roundId: state.roundId, eventId: crypto.randomUUID(), clientMono, clientAt: performance.timeOrigin + clientMono };
-      try { const r = await api(event, playerToken); feedback = r.result || 'Scan received.'; render(); }
+      try { const r = await api(event, playerToken); feedback = r.result || 'Scan received.'; if (r.result === 'Wand tested!') audio.effect('ready'); else if (r.result === 'Ghost captured! +100') audio.effect('capture'); else if (r.result === 'Blast registered.') audio.effect('vanquished'); render(); }
       catch(e) { feedback = 'Scan not confirmed. Check connection, then scan again.'; toast(e.message); render(); }
     });
     document.addEventListener('keydown', e => {
@@ -108,12 +118,15 @@ function shell() {
   } else if (view === 'intro') {
     app.innerHTML = hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div>`;
   } else if (view === 'leaderboard') {
-    app.innerHTML = `<section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><section id="standings" class="standings"></section><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div>`;
+    app.innerHTML = `<section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div>`;
   } else if (view === 'targets') {
     app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map((id,i)=>`<article><span class="ghost-sprite ghost-${i}" aria-hidden="true"></span><div class="qr-frame"><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code" width="330" height="330"></div><h2>Ghost ${id}</h2></article>`).join('')}</section><img id="target-reaction" class="target-reaction" src="/assets/jebediah-alert.webp" alt="Jebediah reacting to the ghosts" hidden>`;
   } else if (view === 'atmosphere') {
     document.body.classList.add('atmosphere');
-    app.innerHTML = `<div class="haunt"><img src="/assets/atmosphere-ghost.webp" alt="A floating gauze ghost with green streamers and an orange pumpkin"></div><div class="mist"></div>`;
+    app.innerHTML = `<canvas id="projection" role="img" aria-label="Looping ghosts in the pumpkin patch"></canvas><div id="projection-announcement" class="projection-announcement" role="status" hidden><strong>FINAL SHOWDOWN</strong><span>Ghosts have possessed your fellow hunters! BLAST THEM!</span></div><nav class="projection-controls" aria-label="Projection scenes"><div class="projection-scenes">${['Drift','Current','Whirl'].map((name,i)=>`<a href="/?view=atmosphere&scene=${i+1}"${scene===i+1?' aria-current="page"':''}>${i+1} · ${name}</a>`).join('')}</div><span id="projection-status">Connecting…</span><small>Move the pointer or tap to show controls. Enable sound on one device.</small></nav>`;
+    projection = mountAtmosphere($('projection'), scene);
+    const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
+    document.addEventListener('pointermove',showControls); document.addEventListener('pointerdown',showControls); document.addEventListener('keydown',showControls); showControls();
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -123,6 +136,15 @@ function render() {
   if (!state) return;
   document.body.dataset.phase = state.phase;
   const lobby = state.phase === 'lobby';
+  if (view === 'atmosphere') {
+    projection?.update(state);
+    $('projection-status').textContent = ({lobby:'Standby',pve:'Ghost hunt',pvp:'Final showdown',results:'Round complete'})[state.phase];
+    if (projectionPhase !== state.phase) {
+      clearTimeout(announcementTimer); $('projection-announcement').hidden = state.phase !== 'pvp';
+      if (state.phase === 'pvp') announcementTimer = setTimeout(() => { $('projection-announcement').hidden = true; },6500);
+      projectionPhase = state.phase;
+    }
+  }
   if (view === 'referee') {
     $('login').hidden = !!staffToken; $('unlocked').hidden = !staffToken;
     $('pvp').disabled = !lobby;
@@ -174,7 +196,7 @@ function render() {
   }
   if (view === 'leaderboard') {
     const players = state.players.filter(p=>p.name);
-    $('standings').innerHTML = players.filter(p=>!p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<article class="score-card ${p.color.toLowerCase()}"><span class="rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts</small><strong>${p.score.toLocaleString()}</strong><span class="points">POINTS</span></article>`).join('') || '<div class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></div>';
+    $('standings').innerHTML = players.filter(p=>!p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
     $('vanquished').innerHTML = players.filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
     $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
     $('phase-label').textContent = ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
@@ -189,7 +211,6 @@ function render() {
   }
 }
 async function poll() {
-  if (view === 'atmosphere') return;
   if (busy) { pendingPoll = true; return; }
   busy = true;
   try {
@@ -208,11 +229,19 @@ async function poll() {
   }
 }
 $('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
-$('fullscreen').onclick = async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } };
+$('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(view === 'atmosphere' && e?.detail > 0) $('fullscreen').blur(); } };
 shell();
+const soundControls = $('sound-controls');
+if (soundControls && ['station','intro','leaderboard','atmosphere'].includes(view)) {
+  soundControls.hidden = false;
+  $('sound-toggle').onclick = async event => { $('sound-toggle').disabled = true; try { if (audio.enabled) audio.disable(); else await audio.enable(); } catch(e) { toast(e.message || 'Tap Enable sound to try again.'); } finally { $('sound-toggle').disabled = false; if(view === 'atmosphere' && event?.detail > 0) $('sound-toggle').blur(); } };
+  $('sound-volume').oninput = () => audio.setVolume(Number($('sound-volume').value));
+  $('sound-volume').onpointerup = () => { if(view === 'atmosphere') $('sound-volume').blur(); };
+}
+window.addEventListener('pagehide', event => { if(event.persisted) audio.disable(); else { projection?.destroy(); audio.destroy(); } });
 connectGameUpdates(globalThis.io, poll);
 poll();
-setInterval(poll, view === 'station' ? 2000 : 15000);
+setInterval(poll, ['station','atmosphere'].includes(view) ? 2000 : 15000);
 setInterval(() => {
   if ($('clock') && state) {
     const ms = state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
@@ -222,6 +251,6 @@ setInterval(() => {
   // Referee and display views intentionally poll every 15 seconds when no
   // Socket.IO event arrives. Allow two poll intervals plus some jitter before
   // declaring the connection stale; stations heartbeat every 2 seconds.
-  const staleAfter = view === 'station' ? 10000 : 35000;
+  const staleAfter = ['station','atmosphere'].includes(view) ? 10000 : 35000;
   if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection issue'; $('connection').className = 'offline'; }
 }, 250);

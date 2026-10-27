@@ -4,7 +4,7 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Ghost Patrol Targets</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/print.css?v=haunt-20261026-1">
+  <link rel="stylesheet" href="/print.css?v=haunt-20261027-1">
 </head>
 <body>
   <nav aria-label="Printable targets">
@@ -13,11 +13,12 @@
     <a href="?kind=badges">6 chest badges</a>
     <a href="?kind=test">Wand test</a>
     <button onclick="print()">Print selected targets</button>
-    <span>Letter paper · 100% scale · one sided</span>
+    <span>Letter paper · 100% scale · one sided · cut ghosts along the dashed outline</span>
   </nav>
   <main id="sheets"></main>
   <script type="module">
-    import { icon } from '/icons.js?v=haunt-20261026-1';
+    import { icon } from '/icons.js?v=haunt-20261027-1';
+    import { ghostCutout } from '/ghost-cutout.js?v=haunt-20261027-1';
     const kind = new URLSearchParams(location.search).get('kind') || 'test';
     const colors = ['Black','White','Blue','Red','Yellow','Green'];
     const targets = kind === 'ghosts'
@@ -25,7 +26,7 @@
       : kind === 'badges'
         ? colors.map(color=>({ title:color, file:'player-'+color.toLowerCase(), badge:color.toLowerCase() }))
         : [{ title:'Wand check', file:'test', note:'Scan here to test your scanner blaster' }];
-    document.getElementById('sheets').innerHTML = targets.map(t=>`
+    document.getElementById('sheets').innerHTML = targets.map(t=>t.ghost !== undefined ? `<section class="sheet ghost-sheet">${ghostCutout(Number(t.file.split('-')[1]))}</section>` : `
       <section class="sheet ${t.badge ? 'badge '+t.badge : ''}">
         <header class="target-header">
           ${t.ghost !== undefined ? `<span class="ghost-sprite ghost-${t.ghost}" aria-hidden="true"></span>` : `<span class="print-mark" aria-hidden="true">${icon(t.badge ? 'ghost' : 'blaster')}</span>`}

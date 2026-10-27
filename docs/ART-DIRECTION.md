@@ -48,6 +48,14 @@ Computer selection fills its fixed scanner color. The API validates the pair. Ex
 
 HTML entry pages use `Cache-Control: no-cache`; changed app and stylesheet URLs carry a release version so browser refreshes receive the new presentation. Artwork and fonts are served locally with the application.
 
-The production build and 20 automated game/API/server checks pass. Additional DOM checks exercised 36 page/state combinations, all six scanner selections, stable name-entry fields, staff-control visibility, and print counts of 15 ghosts, six badges, and one test target. QR files were checked against the repository baseline and were not modified. Generated image transparency and dimensions were inspected.
+The production build and 25 automated game/API/server/presentation checks pass. Additional DOM checks exercised 36 page/state combinations, all six scanner selections, stable name-entry fields, staff-control visibility, and print counts of 15 ghosts, six badges, and one test target. QR files were checked against the repository baseline and were not modified. Generated image transparency and dimensions were inspected.
 
 Browser rendering and physical scanner validation remain follow-up checks: the workspace has no browser executable, and the Chromium download was blocked. DOM checks do not establish the visual appearance or scanner range on real devices.
+
+## October 27 refinements
+
+Three scene URLs (`?view=atmosphere&scene=1`, `2`, or `3`) animate the ghost atlas in crossing drifts, a horizontal current, or a ceiling spiral. Black projection backgrounds keep rectangular light spill low. Actual PvP phase changes add a warm haze, more ghosts, quicker movement, and a brief announcement; the hidden referee setting does not trigger any preview. Reduced-motion preferences slow the scene and reduce the ghost count.
+
+The leaderboard uses a single vertical ranking list with color labels, capture counts, and right-aligned scores. Ghost printouts use `ghost-cutout.js`: a broad dashed silhouette contains the face, title, original QR, and point note. The cutouts retain a clean white QR area.
+
+`audio.js` supplies an original procedural score: soft minor-key bells, filtered wind, plucked-string underscoring, scan/capture cues, a results chord, and a plucked-string/whistle western sting for PvP. Sound requires an explicit gesture; one selected display should supply room audio. Projection screens now receive public game-state updates.

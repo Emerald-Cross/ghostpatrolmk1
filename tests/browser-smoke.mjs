@@ -34,9 +34,9 @@ try {
   await board.goto(base+'/?view=leaderboard');
   await station.bringToFront();await station.locator('#focus').click();
   await station.keyboard.type('Ghost 1');await station.keyboard.press('Enter');
-  await board.waitForFunction(()=>document.querySelector('.score-card>strong')?.textContent==='100');
+  await board.waitForFunction(()=>document.querySelector('.score-row .score-value')?.textContent==='100');
   await station.keyboard.type('Ghost 1');await station.keyboard.press('Enter');await board.waitForTimeout(1500);
-  assert.equal(await board.locator('.score-card>strong').textContent(),'100');
+  assert.equal(await board.locator('.score-row .score-value').textContent(),'100');
   await ref.getByRole('button',{name:'Return to welcome screen'}).click();
   assert.equal(await ref.locator('#staff-panel').isVisible(),false);
   const publicView=await (await board.request.get(base+'/api/game')).json();

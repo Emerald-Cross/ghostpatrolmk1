@@ -47,7 +47,9 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 | `/?view=leaderboard` | Live scores for a TV |
 | `/?view=intro` | Jebediah’s welcome, test QR, and readiness |
 | `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
-| `/?view=atmosphere` | Floating gauze ghost, no game controls |
+| `/?view=atmosphere&scene=1` | Projection 1: crossing ghost drifts |
+| `/?view=atmosphere&scene=2` | Projection 2: a flowing ghost current |
+| `/?view=atmosphere&scene=3` | Projection 3: a ceiling spiral |
 | `/print.html?kind=ghosts` | 15 letter-size physical ghost pages |
 | `/print.html?kind=badges` | Six color chest badges |
 | `/print.html?kind=test` | One scanner test page |
@@ -97,10 +99,18 @@ The development environment could not download Chromium because its download hos
 
 ## Prototype scope
 
-This is a functional first prototype with static orientation text and an atmosphere animation. It does not yet include audio cues, recorded Jebediah narration, pausing, or a pre-round countdown. Joining and releasing stations are lobby-only; a disconnected player can reconnect with the same valid token. “Next group” keeps assignments; full reset releases them. The referee can end a round early but cannot change its mode mid-round. One shared game room is supported.
+This is a functional first prototype with static orientation text and an atmosphere animation. It includes user-activated original background music and sound effects, plus an original western-style finale sting. Recorded Jebediah narration, pausing, and a pre-round countdown are not included. Joining and releasing stations are lobby-only; a disconnected player can reconnect with the same valid token. “Next group” keeps assignments; full reset releases them. The referee can end a round early but cannot change its mode mid-round. One shared game room is supported.
 
 Original art is included verbatim from the user’s seven attachments. `scripts/prepare-assets.py` regenerates QR SVGs with ReportLab and optionally recopies originals from a sibling `upload` directory. Committed SVGs work without Python at runtime. Keep QR quiet zones clear; decoration stays outside the code.
 
 ## Visual direction
 
 The interface uses a dark illustrated pumpkin patch, large locally hosted spooky headings, and a restrained palette. See [ART-DIRECTION.md](docs/ART-DIRECTION.md) for the asset inventory, production rules, and current review limits.
+
+## Projection, music, and cutout targets
+
+Open one of the three atmosphere URLs on each projector and select **Full screen**. Ghosts loop against black for wall or ceiling projection. The screens subscribe to the game and poll every two seconds as a fallback. When the public phase actually becomes PvP, the scene warms, more ghosts appear, movement speeds up, and a brief finale announcement appears. The mode setting is not exposed beforehand.
+
+Select **Enable sound** on one device (an atmosphere, intro, or leaderboard screen) to play the background score and game effects. The slider controls volume. Sound starts only after that gesture and starts muted after navigation or reload. A scanner station can enable local scan effects without background music. The western sting runs once on entry into PvP; historical captures do not replay when a display joins. All music is synthesized locally from original code, with no external music services or recordings.
+
+Print `/print.html?kind=ghosts` on letter paper at 100% scale. Each page is one ghost: cut along its dashed outside outline, keeping the face and QR code together. The original QR data and white quiet zones are retained; the new QR canvas is about 5.2 inches wide. Test a printed cutout with the actual scanner before printing the full set.

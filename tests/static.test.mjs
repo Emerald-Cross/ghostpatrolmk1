@@ -12,7 +12,7 @@ test('Render server serves every session asset and QR without exposing source fi
   await new Promise(resolveListen => runtime.server.listen(0, '127.0.0.1', resolveListen));
   const base = `http://127.0.0.1:${runtime.server.address().port}`;
   try {
-    for (const path of ['/', '/?view=station', '/?view=referee', '/?view=intro', '/?view=leaderboard', '/?view=targets', '/?view=atmosphere', '/style.css', '/app.js', '/icons.js', '/scanner.js', '/realtime.js', '/print.html', '/print.css', '/favicon.svg', '/fonts/creepster-regular.ttf', '/assets/patch-night.webp', '/assets/jebediah-welcome.webp', '/assets/jebediah-alert.webp', '/assets/jebediah-victory.webp', '/assets/ghosts-trio.webp', '/assets/scanner.webp', '/assets/pumpkin.webp', '/assets/atmosphere-ghost.webp']) assert.equal((await fetch(base + path)).status, 200, path);
+    for (const path of ['/', '/?view=station', '/?view=referee', '/?view=intro', '/?view=leaderboard', '/?view=targets', '/?view=atmosphere', '/style.css', '/app.js', '/icons.js', '/audio.js', '/atmosphere.js', '/ghost-cutout.js', '/scanner.js', '/realtime.js', '/print.html', '/print.css', '/favicon.svg', '/fonts/creepster-regular.ttf', '/assets/patch-night.webp', '/assets/jebediah-welcome.webp', '/assets/jebediah-alert.webp', '/assets/jebediah-victory.webp', '/assets/ghosts-trio.webp', '/assets/scanner.webp', '/assets/pumpkin.webp', '/assets/atmosphere-ghost.webp']) assert.equal((await fetch(base + path)).status, 200, path);
     for (let i = 1; i <= 18; i++) {
       const response = await fetch(`${base}/qr/ghost-${i}.svg`); assert.equal(response.status, 200);
       assert.match(await response.text(), new RegExp(`<title>Ghost ${i}</title>`));

@@ -31,7 +31,7 @@ An offline scan is not queued for later scoring, preventing a stale scan from ar
 
 ## Capacity estimate
 
-Six stations at one heartbeat every two seconds plus four active display/referee clients at one poll per second produce about seven requests per second before scans: roughly 25,200/hour. At 4 KB per response that is approximately 101 MB/hour of response payload before transport overhead. This is an estimate, not measured quota consumption. The actual number depends on open screens, payload size, game activity, and event duration. Inspect usage after rehearsal; close unused sessions. Vercel function and request quotas still apply even though Supabase lists unlimited API requests. Atmosphere screens do not poll.
+Fallback HTTP refreshes run every two seconds for scanner stations and projection screens, and every fifteen seconds for other active screens. Six stations, three projectors, and three other screens therefore generate approximately 4.7 requests per second before scans and Socket.IO invalidations. Each connected screen also refreshes when the shared state changes. Close unused sessions and inspect deployment usage after rehearsal.
 
 ## Test boundary
 
