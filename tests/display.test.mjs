@@ -126,26 +126,26 @@ test('control hub stays available throughout play and results without password f
   }
 });
 
-test('device profiles launch exactly their assigned screens and keep capture last', () => {
-  const d = display('hub'), opened = [];
-  d.context.window.open = (url, name) => opened.push({url, name});
+test('computer selection shows screen buttons without opening windows or navigating', () => {
+  const d = display('hub'), opened = [], selected = [];
+  d.context.window.open = (...args) => opened.push(args);
+  d.context.location.assign = url => opened.push(url);
+  d.context.document.querySelectorAll = () => ['east','central','student','iphone'].map(id => ({
+    dataset: {device:id}, setAttribute(name,value) { selected.push({id,name,value}); }
+  }));
+  d.context.document.getElementById = id => id === 'device-links' ? (d.links ||= {}) : d.get(id);
   for (const [id, urls] of Object.entries({
     east: ['/?view=leaderboard', '/?view=atmosphere&scene=1', '/?view=station&station=east'],
     central: ['/?view=atmosphere&scene=2', '/?view=station&station=center'],
-    student: ['/?view=hub', '/?view=station&station=studentprimary']
+    student: ['/?view=hub', '/?view=station&station=studentprimary'],
+    iphone: ['/?view=referee']
   })) {
-    // Launcher feedback is the only extra element outside the hub shell.
-    d.context.document.getElementById = id => id === 'device-links' ? (d.links ||= {}) : d.get(id);
-    opened.length = 0;
     vm.runInContext(`launchDevice('${id}')`, d.context);
-    assert.deepEqual(opened.map(item => item.url), urls);
-    assert.match(d.links.innerHTML, /If any tabs did not open/);
-    for (const {url} of opened) assert.ok(d.links.innerHTML.includes(`href="${url}"`));
+    assert.equal(opened.length, 0, 'selection must never open a window or navigate');
+    assert.equal([...d.links.innerHTML.matchAll(/class="screen-button"/g)].length, urls.length);
+    for (const url of urls) assert.ok(d.links.innerHTML.includes(`href="${url}"`));
+    assert.equal(d.links.innerHTML.includes('target='), id !== 'iphone');
+    assert.ok(selected.some(button => button.id === id && button.name === 'aria-pressed' && button.value === 'true'));
+    assert.doesNotMatch(d.links.innerHTML, /pop-ups/);
   }
-  let destination;
-  d.context.location.assign = url => { destination = url; };
-  opened.length = 0;
-  vm.runInContext("launchDevice('iphone')", d.context);
-  assert.equal(destination, '/?view=referee');
-  assert.equal(opened.length, 0, 'iPhone keeps AirPlay on its current tab');
 });

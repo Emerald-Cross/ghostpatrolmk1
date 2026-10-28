@@ -87,3 +87,8 @@ main{position:relative;z-index:1;width:100%;max-width:1680px;margin:auto;padding
 #device-setup h1 { font-size:clamp(32px,5vw,64px); }
 #device-links { margin-top:24px; }
 #iphone-boss[hidden], #setup-screen[hidden] { display:none !important; }
+
+.device-choice[aria-pressed="true"] { outline:3px solid var(--ink); outline-offset:3px; }
+.screen-buttons { display:flex; flex-wrap:wrap; gap:12px; margin:16px 0 24px; }
+.screen-button { display:inline-flex; align-items:center; justify-content:center; min-height:46px; padding:12px 19px; border:1px solid #e3b58b; border-bottom-width:3px; border-radius:7px; background:var(--copper); color:#17151b; font-size:14px; font-weight:750; text-decoration:none; }
+.screen-button:hover { background:#dfa16c; }

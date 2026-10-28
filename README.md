@@ -27,9 +27,9 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 
 ## First scanner trial
 
-1. Open the homepage on each device and choose its computer. You can also skip to the individual screens.
-2. East opens the combined leaderboard/orientation display, ambience scene 1, and Green scan capture. Central opens ambience scene 2 and Blue scan capture. Student main opens the control hub and Red scan capture. The iPhone opens the combined Setup Station / boss page in the current tab.
-3. Allow pop-ups if the browser blocks any tabs, or use the direct links shown after choosing a computer. Move display tabs onto their displays and leave the scan capture tab active on each computer. Assigned capture tabs connect automatically; manual capture links offer a computer selector and Connect button.
+1. Open the homepage on each device and choose its computer, then click the screen buttons underneath. You can also skip to the individual screens.
+2. East offers the combined leaderboard/orientation display, ambience scene 1, and Green scan capture. Central offers ambience scene 2 and Blue scan capture. Student main offers the control hub and Red scan capture. The iPhone offers a button for the combined Setup Station / boss page in the current tab.
+3. Computer selection only reveals buttons; click each button to open that screen. Move display tabs onto their displays and leave the scan capture tab active on each computer. Assigned capture tabs connect automatically; manual capture links offer a computer selector and Connect button.
 4. Enter player names on the iPhone, then scan its test code with each blaster. No passwords are required. The control hub stays available for round controls throughout play.
 5. Start from the Student main control hub. The iPhone automatically switches to the boss display for the round, and the East display switches from orientation to scores. Mirror the iPhone to its TV with AirPlay. The boss appears after 80 seconds and takes nine hits.
 6. Jebediah thanks the players after the boss is defeated, including when PvP is disabled. The boss screen announces the PvP finale when enabled. Final scores stay visible on the leaderboard.

@@ -98,17 +98,18 @@ const deviceProfiles = {
 };
 function launchDevice(id) {
   const profile = deviceProfiles[id];
-  if (id === 'iphone') { location.assign(profile.screens[0].url); return; }
-  // Open synchronously during the click so browsers can honor the user gesture.
-  for (const screen of profile.screens) window.open(screen.url, `ghost-patrol-${id}-${screen.name}`, '');
-  $('device-links').innerHTML = `<h2>${profile.name} screens</h2><p>If any tabs did not open, allow pop-ups for this site or use these links. Keep scan capture active on the computer; move display tabs onto their screens.</p><div class="control-row">${profile.screens.map(screen => `<a class="quiet" href="${screen.url}" target="ghost-patrol-${id}-${screen.name}">${screen.name}</a>`).join('')}</div>`;
+  document.querySelectorAll('[data-device]').forEach(button => {
+    button.setAttribute('aria-pressed', String(button.dataset.device === id));
+  });
+  $('device-links').innerHTML = `<h2>${profile.name} screens</h2><p>${id === 'iphone' ? 'Open setup here, then mirror this page to the boss TV with AirPlay.' : 'Open each screen using the buttons below. Keep scan capture active on the computer; move display tabs onto their screens.'}</p><div class="screen-buttons">${profile.screens.map(screen => `<a class="screen-button" href="${screen.url}"${id === 'iphone' ? '' : ` target="ghost-patrol-${id}-${screen.name}"`}>Open ${screen.name}</a>`).join('')}</div>`;
 }
+
 function bossMarkup() {
   return `${patchScene()}${bossGhost()}${bossThanks()}${bossPvpAnnouncement()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">BOSS BATTLE</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
 }
 function shell() {
   if (view === 'home') {
-    app.innerHTML = `<section id="device-setup" class="panel"><p class="eyebrow">QUICK SETUP</p><h1>Which computer are you setting up?</h1><p>Choose a device to open its assigned screens.</p><div class="device-grid">${Object.entries(deviceProfiles).map(([id, profile]) => `<button class="device-choice" data-device="${id}"><strong>${profile.name}</strong><span>${profile.screens.map(screen => screen.name).join(' · ')}</span></button>`).join('')}</div><button id="skip-setup" class="quiet">Skip · choose a screen</button><div id="device-links" role="status"></div></section><section id="manual-screens" hidden>` + hero(gameTitle.replace(" Crow's", "<br>Crow's").replace(" patch", "<br>patch"), 'Grab a blaster! Let’s save Halloween.') +
+    app.innerHTML = `<section id="device-setup" class="panel"><p class="eyebrow">QUICK SETUP</p><h1>Which computer are you setting up?</h1><p>Choose a device, then use its screen buttons below.</p><div class="device-grid">${Object.entries(deviceProfiles).map(([id, profile]) => `<button class="device-choice" data-device="${id}" aria-pressed="false" aria-controls="device-links"><strong>${profile.name}</strong><span>${profile.screens.map(screen => screen.name).join(' · ')}</span></button>`).join('')}</div><div id="device-links" aria-live="polite"></div><button id="skip-setup" class="quiet">Skip · choose a screen</button></section><section id="manual-screens" hidden>` + hero(gameTitle.replace(" Crow's", "<br>Crow's").replace(" patch", "<br>patch"), 'Grab a blaster! Let’s save Halloween.') +
       `<section class="launch-grid" aria-label="Game screens">${[
         launchTile('referee', 'setup', 'Setup Station & boss', 'Enter names on the iPhone, then keep it on the boss screen.'),
         launchTile('hub', 'setup', 'Control hub', 'Start rounds, change settings, and prepare the next group.'),
