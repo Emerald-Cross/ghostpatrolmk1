@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { sampleGhost } from '../public/atmosphere.js';
+import { sampleGhost, sampleBat } from '../public/atmosphere.js';
 import { createGameAudio } from '../public/audio.js';
 import { ghostCutout } from '../public/ghost-cutout.js';
 
@@ -70,7 +70,7 @@ test('projection canvas follows live PvP state, adds ghosts, and releases its an
   const originals=new Map();
   const put=(key,value)=>{originals.set(key,Object.getOwnPropertyDescriptor(globalThis,key));Object.defineProperty(globalThis,key,{configurable:true,writable:true,value});};
   let callback,cancelled=false,removed=false,visible=0;
-  const ctx={setTransform(){},fillRect(){},createRadialGradient(){return {addColorStop(){}};},save(){},restore(){},translate(){},rotate(){},scale(){},drawImage(){if(this.globalAlpha>.01)visible++;}};
+  const ctx={beginPath(){},moveTo(){},quadraticCurveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},setTransform(){},fillRect(){},createRadialGradient(){return {addColorStop(){}};},save(){},restore(){},translate(){},rotate(){},scale(){},drawImage(){if(this.globalAlpha>.01)visible++;}};
   const canvas={dataset:{},getContext:()=>ctx};let projection;
   try{
     put('Image',class{constructor(){this.complete=true;this.naturalWidth=1800;this.naturalHeight=600;}});
@@ -105,4 +105,14 @@ test('boss damage display keeps its QR stable, hides it after defeat, and clears
   updateBoss(document,{roundId:'two',boss:{status:'waiting',health:3,maxHealth:3,hits:[]}});
   assert.equal(ids['boss-float'].hidden,true);assert.equal(ids['boss-ghost'].dataset.damage,'0');assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),false);
   assert.match(bossGhost(),/href="\/qr\/boss.svg"/);assert.match(patchScene(),/patch-silhouette/);
+});
+
+test('bat silhouettes cross all projection scenes with finite wing motion and a still-wing reduced-motion variant',()=>{
+  for(const scene of [1,2,3])for(let i=0;i<4;i++)for(const seconds of [0,1,15,40,1000]){
+    const b=sampleBat(scene,i,seconds);
+    for(const key of ['x','y','flap','scale','angle'])assert.ok(Number.isFinite(b[key]));
+    assert.ok(b.x>=-.15&&b.x<=1.15);assert.ok(Math.abs(b.flap)<=1);
+    assert.equal(sampleBat(scene,i,seconds,true).flap,.35);
+  }
+  assert.notEqual(sampleBat(1,0,0).flap,sampleBat(1,0,1).flap);
 });

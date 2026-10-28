@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=boss-20261028-1';
+import { createScanner } from '/scanner.js?v=bats-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=boss-20261028-1';
-import { createGameAudio } from '/audio.js?v=boss-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=boss-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=boss-20261028-1';
+import { icon } from '/icons.js?v=bats-20261028-1';
+import { createGameAudio } from '/audio.js?v=bats-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=bats-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=bats-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
