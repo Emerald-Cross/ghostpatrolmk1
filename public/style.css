@@ -77,3 +77,13 @@ main{position:relative;z-index:1;width:100%;max-width:1680px;margin:auto;padding
 .boss-pvp-announcement{position:fixed;z-index:6;left:6vw;right:6vw;bottom:5vh;display:flex;align-items:center;flex-direction:column;gap:8px;padding:20px 28px;border:2px solid #d4ad7b;border-radius:12px;background:#11101bef;box-shadow:0 0 38px #d4ad7b55;color:#fff4df;text-align:center;text-shadow:0 2px 5px #000;pointer-events:none}.boss-pvp-announcement strong{font:400 clamp(42px,6.5vw,92px)/1 var(--display);letter-spacing:.06em}.boss-pvp-announcement span{font:700 clamp(24px,3.4vw,48px)/1.2 Arial,sans-serif}.boss-pvp-enter{animation:boss-pvp-enter .65s cubic-bezier(.2,.8,.2,1) both}@keyframes boss-pvp-enter{0%{opacity:0;transform:translateY(30px) scale(.94)}70%{opacity:1;transform:translateY(-4px) scale(1.015)}100%{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-aspect-ratio:1/1){.boss-taunt{width:46vw;left:32%;top:-3%;padding:12px;font-size:clamp(17px,3.5vw,27px)}.boss-hud{left:3vw;right:auto;max-width:50vw;text-align:left}.boss-hud h1{font-size:clamp(25px,5vw,38px)}.boss-health{width:45vw}.boss-thanks{grid-template-columns:1fr;gap:0;padding:5vh 7vw;text-align:center}.boss-thanks .eyebrow{justify-content:center}.boss-thanks h1{font-size:clamp(38px,8vw,64px);margin-bottom:12px}.boss-thanks img{height:45dvh}.boss-thanks p:not(.eyebrow){margin-bottom:0}}
 @media(prefers-reduced-motion:reduce){.boss-thanks.after-defeat,.taunt-enter,.boss-pvp-enter{animation:none}}
+
+
+/* Device setup and the iPhone's combined setup / boss display. */
+.device-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:16px; margin:24px 0; }
+.device-choice { display:flex; flex-direction:column; text-align:left; gap:10px; padding:22px; }
+.device-choice span { font-size:14px; font-weight:400; line-height:1.5; }
+#device-setup { max-width:1100px; margin:32px auto; }
+#device-setup h1 { font-size:clamp(32px,5vw,64px); }
+#device-links { margin-top:24px; }
+#iphone-boss[hidden], #setup-screen[hidden] { display:none !important; }

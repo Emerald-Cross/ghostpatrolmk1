@@ -7,7 +7,7 @@ import { initialState, apply } from '../lib/game.mjs';
 
 test('HTTP multi-session trial: setup, scan, shared scoreboard, secrecy, reset', async () => {
   let now=1000;
-  const handler=createHandler({store:memoryStore(),refereeSecret:'test-referee-passphrase',sessionSecret:'test-session-secret-32-characters-long',clock:()=>now});
+  const handler=createHandler({store:memoryStore(),sessionSecret:'test-session-secret-32-characters-long',clock:()=>now});
   const server=http.createServer(handler); await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base=`http://127.0.0.1:${server.address().port}`;
   const call=async (body,token,origin)=>{
@@ -16,8 +16,8 @@ test('HTTP multi-session trial: setup, scan, shared scoreboard, secrecy, reset',
   };
   try {
     assert.equal((await call({action:'settings',pvpEnabled:false})).status,403);
-    assert.equal((await call({action:'login',secret:'bad'})).status,403);
-    const admin=(await call({action:'login',secret:'test-referee-passphrase'})).body.token;
+    assert.equal((await call({action:'login'})).status,200, 'controls open without a password');
+    const admin=(await call({action:'login'})).body.token;
     assert.equal((await call({action:'settings',pvpEnabled:false},admin,'http://evil.example')).status,403);
     await call({action:'settings',pvpEnabled:false},admin);
     const joined=(await call({action:'claim',color:'Red',station:'studentprimary'},admin)).body;
@@ -75,7 +75,7 @@ test('Supabase adapter protocol, CAS conflict retry and service key isolation',a
 
 test('HTTP simultaneous boss blasts settle to nine shared hits, 900 points, and matching display state',async()=>{
   let now=1000;
-  const handler=createHandler({store:memoryStore(),refereeSecret:'test-referee-passphrase',sessionSecret:'test-session-secret-32-characters-long',clock:()=>now});
+  const handler=createHandler({store:memoryStore(),sessionSecret:'test-session-secret-32-characters-long',clock:()=>now});
   const server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));
   const base=`http://127.0.0.1:${server.address().port}`;
   const call=async(body,token)=>{
@@ -83,7 +83,7 @@ test('HTTP simultaneous boss blasts settle to nine shared hits, 900 points, and 
     assert.equal(response.status,200);return response.json();
   };
   try{
-    const {token:admin}=await call({action:'login',secret:'test-referee-passphrase'});
+    const {token:admin}=await call({action:'login'});
     const hunters=[];let roundId;
     for(const [color,station] of Object.entries({Black:'joshdesk',White:'barbdesk',Blue:'center',Red:'studentprimary',Yellow:'north',Green:'east'})){
       const joined=await call({action:'claim',color,station},admin);roundId=joined.state.roundId;hunters.push({color,token:joined.token});
@@ -104,4 +104,5 @@ test('HTTP simultaneous boss blasts settle to nine shared hits, 900 points, and 
     assert.equal(reset.state.boss.status,'waiting');assert.equal(reset.state.boss.health,9);
   }finally{await new Promise(r=>server.close(r));}
 });
+
 

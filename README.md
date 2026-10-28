@@ -2,7 +2,7 @@
 
 First playable prototype for the October 28, 2026 department Halloween event.
 
-Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub and scan its test QR. Staff then start the round. The shared display shows Jebediah’s orientation during setup, then live scores during play and final scores until staff select Next group. The repository includes Jebediah and the other supplied art, printable QR targets, and target and atmosphere screens.
+Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub and scan its test QR. Staff then start the round. The shared display shows Jebediah’s orientation during setup, then live scores during play and final scores until staff select Next group. The repository includes Jebediah and the other supplied art, printable QR targets, and ambience screens.
 
 ## Run a local trial
 
@@ -10,7 +10,7 @@ Install **Node.js 22.9 through 24** and npm.
 
 1. Extract the archive and open a terminal in `ghost-patch`.
 2. Copy `.env.example` to `.env`.
-3. Replace `REFEREE_SECRET` with a private passphrase of at least 16 characters. Set `SESSION_SECRET` to a different random value of at least 32 characters. Do not use the example values on a network.
+3. Set `SESSION_SECRET` to a random value of at least 32 characters for automatic station sessions. No user passwords are needed. Do not use the example values on a network.
 4. In the project folder, run `npm install` once to install Express and Socket.IO.
 5. Leave `LOCAL_DEMO=1`, with the two Supabase values empty.
 6. Run `npm run dev` and visit `http://localhost:3000`.
@@ -27,13 +27,13 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 
 ## First scanner trial
 
-1. Open `/?view=referee` on the iPhone. Tap **Staff controls** and unlock with your passphrase.
-2. Privately turn off the surprise PvP finale for the one-player trial. Tap **Return to welcome screen**. The player-facing setup contains no finale setting.
-3. On a scanner’s workstation, open `/?view=station`. Select its computer name; the assigned scanner color appears automatically. Enter the passphrase and connect. The browser stores a signed player token, not the staff passphrase.
-4. On the welcome/referee screen, the player enters and saves their name without unlocking Staff controls. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
-5. On a separate display, open `/?view=leaderboard`. It shows orientation during setup. Start the round from private staff controls: the display switches to the live leaderboard for the hunt and finale. Final scores remain visible after the round ends, until staff select **Next group**, which returns the display to orientation. No navigation or second display is needed.
-6. Open `/print.html?kind=ghosts` and print Ghost 1. Scan it: the player gets **100 points**. Scan it again: the score stays **100**. A second player may score that same ghost independently.
-7. End the round. **Next group** clears names and scores while keeping workstation assignments. **Reset lobby & release all** also invalidates station tokens; staff must reconnect them.
+1. Open the homepage on each device and choose its computer. You can also skip to the individual screens.
+2. East opens the combined leaderboard/orientation display, ambience scene 1, and Green scan capture. Central opens ambience scene 2 and Blue scan capture. Student main opens the control hub and Red scan capture. The iPhone opens the combined Setup Station / boss page in the current tab.
+3. Allow pop-ups if the browser blocks any tabs, or use the direct links shown after choosing a computer. Move display tabs onto their displays and leave the scan capture tab active on each computer. Assigned capture tabs connect automatically; manual capture links offer a computer selector and Connect button.
+4. Enter player names on the iPhone, then scan its test code with each blaster. No passwords are required. The control hub stays available for round controls throughout play.
+5. Start from the Student main control hub. The iPhone automatically switches to the boss display for the round, and the East display switches from orientation to scores. Mirror the iPhone to its TV with AirPlay. The boss appears after 80 seconds and takes nine hits.
+6. Jebediah thanks the players after the boss is defeated, including when PvP is disabled. The boss screen announces the PvP finale when enabled. Final scores stay visible on the leaderboard.
+7. Select **Next group** at the control hub. Names and scores clear, scanner connections stay assigned, and the iPhone returns to setup. **Reset lobby & release all** also releases scanner assignments.
 
 Keep the scanner browser focused. The page displays an inactive-window warning; a web page cannot force its window in front of other applications. Test the actual S740 keyboard output, speed, range, and terminator before the event. A scan is processed on its Enter/carriage-return key event. Unknown codes are ignored. Unconfirmed scans are not silently replayed later; rescan after the connection recovers.
 
@@ -41,13 +41,13 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 
 | URL | Use |
 | --- | --- |
-| `/` | Staff session chooser |
-| `/?view=referee` | Landscape-friendly referee and player setup |
-| `/?view=station` | Scanner capture, with staff pairing once |
+| `/` | Skippable computer setup chooser |
+| `/?view=referee` | iPhone setup in lobby; boss display during play and results |
+| `/?view=hub` | Always-available round controls and roster |
+| `/?view=station` | Scanner capture, with password-free pairing |
 | `/?view=leaderboard` | Shared TV display: orientation in setup, live leaderboard during play, final scores until Next group |
 | `/?view=intro` | Alternate link to the same automatic leaderboard/orientation display |
 | `/?view=boss` | Pumpkin patch, then the nine-hit Patch Phantom at 1:20 |
-| `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
 | `/?view=atmosphere&scene=1` | Projection 1: crossing ghost drifts |
 | `/?view=atmosphere&scene=2` | Projection 2: a flowing ghost current |
 | `/?view=atmosphere&scene=3` | Projection 3: a ceiling spiral |
@@ -95,10 +95,10 @@ Automated checks cover ghost scoring, concurrent updates from six colors, duplic
 An optional real-browser trial is in `tests/browser-smoke.mjs`. With Playwright installed and its Chromium browser available, start the local server and run:
 
 ```sh
-REFEREE_TEST_SECRET=your-local-passphrase node tests/browser-smoke.mjs
+node tests/browser-smoke.mjs
 ```
 
-The development environment could not download Chromium because its download host was blocked, so **browser rendering and interaction have not been verified here**. Actual iPhone Safari, QR printing/scanning, shared cloud storage, digital target scanning, and office audio still require trials. See [docs/REHEARSAL.md](docs/REHEARSAL.md).
+The development environment could not download Chromium because its download host was blocked, so **browser rendering and interaction have not been verified here**. Actual iPhone Safari, QR printing/scanning, shared cloud storage, and office audio still require trials. See [docs/REHEARSAL.md](docs/REHEARSAL.md).
 
 ## Prototype scope
 
@@ -127,3 +127,4 @@ Connected scanner stations automatically use the same patch scenery during ghost
 The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.
 
 Both display links show orientation while the lobby is being prepared. Starting a round switches to the current group’s live leaderboard, which remains on screen through results until staff select **Next group** (or reset the lobby). Completed standings include vanquished players. Old round scores remain stored in shared history, but do not replace this group’s final standings. Refreshing selects the correct display from the shared server phase, including results. Switching happens in place, preserving fullscreen and enabled audio. The home screen has one combined Leaderboard & orientation tile.
+

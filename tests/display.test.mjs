@@ -35,9 +35,11 @@ function display(view) {
     URLSearchParams, location: { search: `?view=${view}` },
     sessionStorage: { getItem: () => '' }, localStorage: { getItem: () => '' },
     document: { getElementById: id => elements.get(id), body: { classList, dataset: {} } },
+    patchScene: () => '', bossGhost: () => '', bossThanks: () => '', bossPvpAnnouncement: () => '',
+    updateBoss: () => {},
     window: { innerHeight: 900 }, icon: () => '', createGameAudio: () => ({})
   });
-  vm.runInContext(source + '\nshell();', context);
+  vm.runInContext(source + '\nshell(); bossAnnouncement = { update() {} };', context);
   return {
     get: id => elements.get(id), classes, context,
     render(state) { context.snapshot = state; vm.runInContext('state = snapshot; render();', context); }
@@ -103,3 +105,47 @@ for (const view of ['leaderboard', 'intro']) {
     }
   });
 }
+
+
+test('iPhone switches from setup to boss for play and results, then back for the next group', () => {
+  const d = display('referee');
+  for (const phase of ['lobby', 'pve', 'pvp', 'results', 'lobby']) {
+    d.render(snapshot(phase, {players: []}));
+    assert.equal(d.get('setup-screen').hidden, phase !== 'lobby');
+    assert.equal(d.get('iphone-boss').hidden, phase === 'lobby');
+    assert.equal(d.classes.has('cinematic'), phase !== 'lobby');
+  }
+});
+test('control hub stays available throughout play and results without password fields', () => {
+  const d = display('hub');
+  assert.doesNotMatch(d.get('app').innerHTML, /type="password"|Unlock controls|Sign out/);
+  for (const phase of ['lobby', 'pve', 'pvp', 'results']) {
+    d.render(snapshot(phase, {players: []}));
+    assert.equal(d.get('staff-panel').hidden, false);
+    assert.equal(d.get('setup-screen').hidden, false);
+  }
+});
+
+test('device profiles launch exactly their assigned screens and keep capture last', () => {
+  const d = display('hub'), opened = [];
+  d.context.window.open = (url, name) => opened.push({url, name});
+  for (const [id, urls] of Object.entries({
+    east: ['/?view=leaderboard', '/?view=atmosphere&scene=1', '/?view=station&station=east'],
+    central: ['/?view=atmosphere&scene=2', '/?view=station&station=center'],
+    student: ['/?view=hub', '/?view=station&station=studentprimary']
+  })) {
+    // Launcher feedback is the only extra element outside the hub shell.
+    d.context.document.getElementById = id => id === 'device-links' ? (d.links ||= {}) : d.get(id);
+    opened.length = 0;
+    vm.runInContext(`launchDevice('${id}')`, d.context);
+    assert.deepEqual(opened.map(item => item.url), urls);
+    assert.match(d.links.innerHTML, /If any tabs did not open/);
+    for (const {url} of opened) assert.ok(d.links.innerHTML.includes(`href="${url}"`));
+  }
+  let destination;
+  d.context.location.assign = url => { destination = url; };
+  opened.length = 0;
+  vm.runInContext("launchDevice('iphone')", d.context);
+  assert.equal(destination, '/?view=referee');
+  assert.equal(opened.length, 0, 'iPhone keeps AirPlay on its current tab');
+});

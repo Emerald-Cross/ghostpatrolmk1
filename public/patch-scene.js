@@ -60,7 +60,7 @@ export function updateBoss(document, state) {
   const hud = document.getElementById('boss-hud'), status = document.getElementById('boss-status');
   const playing = ['pve', 'pvp'].includes(state.phase);
   const active = playing && boss.status === 'active', defeated = playing && boss.status === 'defeated';
-  const battleOver = playing && (defeated || (state.startedAt != null && state.phase === 'pvp'));
+  const battleOver = boss.status === 'defeated' || (playing && state.startedAt != null && state.phase === 'pvp');
   const thanks = document.getElementById('boss-thanks');
   if (thanks) {
     thanks.hidden = !battleOver;
@@ -99,3 +99,4 @@ export function updateBoss(document, state) {
 export function bossThanks() {
   return `<section id="boss-thanks" class="boss-thanks" role="status" aria-live="polite" hidden><div class="boss-thanks-copy"><p class="eyebrow">JEBEDIAH CROW</p><h1>Thank you, ghost busters!</h1><p>You helped save my pumpkin patch and Halloween! I couldn’t have done it without you!</p></div><img src="/assets/jebediah-victory.webp" alt="Jebediah Crow celebrating and thanking the players" width="1024" height="1536"></section>`;
 }
+

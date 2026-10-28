@@ -16,8 +16,8 @@ Round state is intentionally small: at most six players, 18 unique ghost capture
 
 ## Permissions and privacy
 
-- Strong staff passphrase exchanges for a signed 24-hour referee token. Referee tokens stay in sessionStorage; station tokens stay in localStorage for reload recovery. Use trusted staff devices, a private deployment URL, and a strong passphrase. This prototype has no distributed sign-in rate limiter or organizational identity integration.
-- Staff pair a station using the passphrase. The station receives a signed color token bound to an epoch and assignment ID. Releasing a color or resetting the lobby invalidates its old token. Next group preserves station assignment IDs while replacing the round ID.
+- Controls and station pairing are password-free. The automatic `login` action issues a signed 24-hour referee token without a secret; this is session plumbing, not access control. Controls remain off the public display views.
+- Stations receive signed color tokens bound to an epoch and assignment ID. Releasing a color or resetting the lobby invalidates old tokens. Next group preserves station assignment IDs while replacing the round ID. `SESSION_SECRET` stays server-side as an internal signing key.
 - Only referees can change names, settings, start/end/reset, or release another station. Public clients cannot mutate scoring. Player scans must use the current round ID and a valid assignment token.
 - Server-only Supabase secret credentials and restricted SQL grants prevent browser roles from writing the database. No Supabase key is returned to the client.
 - Public responses omit the PvP setting, assignment secrets, pending hits, raw diagnostic scan timestamps, and per-round deduplication data. Both game modes have the same initial total timer. The staff panel is hidden during name entry, but staff must close it before showing the phone to participants.
@@ -36,3 +36,4 @@ Fallback HTTP refreshes run every two seconds for scanner stations and projectio
 ## Test boundary
 
 Automated HTTP tests run the real game handler with an in-process store. Parallel tests exercise CAS retries and six concurrent colors. A simulated Supabase HTTP service checks request construction and conflict handling. The real SQL migration and remote project have not been executed here. Chromium download restrictions prevented browser QA. These are explicit follow-up checks, not passed tests.
+

@@ -14,7 +14,7 @@ Render's Free web services accept WebSocket connections. A free service sleeps a
 
 ## Create the Render service
 
-1. In Render, create a new Blueprint from the connected GitHub repository, or create a Web Service and use the settings below. The included `render.yaml` defines the service and asks for the four private environment variables.
+1. In Render, create a new Blueprint from the connected GitHub repository, or create a Web Service and use the settings below. The included `render.yaml` defines the service and asks for the three private environment variables.
 2. Select the **Free** instance plan if creating the service manually.
 3. Use the repository root as the service root directory.
 4. Confirm these commands and health check:
@@ -35,8 +35,7 @@ Set these in Render's service environment. Keep the Supabase key private; do not
 | --- | --- |
 | `SUPABASE_URL` | Your Supabase project HTTPS URL |
 | `SUPABASE_SECRET_KEY` | Supabase server secret or legacy service-role key |
-| `REFEREE_SECRET` | A private passphrase with at least 16 characters |
-| `SESSION_SECRET` | A different random secret with at least 32 characters |
+| `SESSION_SECRET` | A random signing secret with at least 32 characters |
 | `LOCAL_DEMO` | `0` |
 
 Redeploy after saving the environment. The production server refuses memory storage, including when Render restarts it.
@@ -45,7 +44,7 @@ Redeploy after saving the environment. The production server refuses memory stor
 
 1. Wait for Render's deploy to finish, then open the service URL and `/healthz`. The health check should return `ok`.
 2. Open `/?view=referee` on the iPhone, `/?view=station` on a scanner workstation, and `/?view=leaderboard` on a display. The connection label should show **Connected**.
-3. Unlock staff controls, connect one station, enter a name, scan the test code, and make sure readiness updates on the referee page.
+3. Choose the computer from the homepage, connect one station, enter a name, scan the test code, and make sure readiness updates on the referee page.
 4. Turn PvP off for the one-player trial, start a round, scan a printed ghost, and confirm the leaderboard updates immediately. Scan that ghost again; the score should remain unchanged.
 5. Before the event, test all workstations and displays together on the actual office network. Test the S740 terminator, browser focus, sleep/wake behavior, and the referee setting's privacy.
 
@@ -68,3 +67,4 @@ Reviewed October 21, 2026:
 - [Render WebSockets](https://render.com/docs/websocket)
 - [Supabase pricing](https://supabase.com/pricing)
 - [Supabase REST API](https://supabase.com/docs/guides/api)
+

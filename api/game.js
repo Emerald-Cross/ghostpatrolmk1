@@ -1,16 +1,16 @@
 import { performance } from 'node:perf_hooks';
 import { apply, publicState, GameError } from '../lib/game.mjs';
-import { equalSecret, signToken, verifyToken } from '../lib/auth.mjs';
+import { signToken, verifyToken } from '../lib/auth.mjs';
 import { memoryStore, supabaseStore, transact } from '../lib/store.mjs';
 
-export function createHandler({ store, refereeSecret, sessionSecret, clock = () => performance.timeOrigin + performance.now(), onState = () => {} }) {
+export function createHandler({ store, sessionSecret, clock = () => performance.timeOrigin + performance.now(), onState = () => {} }) {
   return async function handler(req, res) {
     const now = clock();
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     const send = (code, value) => { res.statusCode = code; res.end(JSON.stringify(value)); };
     try {
-      if (!refereeSecret || refereeSecret.length < 16 || !sessionSecret || sessionSecret.length < 32) throw new GameError('Set private REFEREE_SECRET and SESSION_SECRET environment variables.', 503);
+      if (!sessionSecret || sessionSecret.length < 32) throw new GameError('Set the SESSION_SECRET environment variable for station sessions.', 503);
       if (!['GET', 'POST'].includes(req.method)) throw new GameError('Method not allowed.', 405);
       if (req.headers.origin && new URL(req.headers.origin).host !== req.headers.host) throw new GameError('Cross-site request blocked.', 403);
       let data = {};
@@ -29,7 +29,6 @@ export function createHandler({ store, refereeSecret, sessionSecret, clock = () 
       const bearer = req.headers.authorization;
       if (bearer) auth = verifyToken(bearer.replace(/^Bearer /, ''), sessionSecret, now);
       if (action === 'login') {
-        if (!equalSecret(data.secret, refereeSecret)) throw new GameError('Incorrect staff passphrase.', 403);
         return send(200, { token: signToken({ role: 'referee' }, sessionSecret, now) });
       }
       const { state, output } = await transact(store, s => apply(s, action, data, auth, now));
@@ -54,7 +53,7 @@ export function createConfiguredHandler({ env = process.env, onState } = {}) {
       res.end(JSON.stringify({ error: 'Configure Supabase shared storage. Local memory mode is only available for local development.' }));
     };
   }
-  return createHandler({ store, refereeSecret: env.REFEREE_SECRET, sessionSecret: env.SESSION_SECRET, onState });
+  return createHandler({ store, sessionSecret: env.SESSION_SECRET, onState });
 }
 
 let cached;
@@ -62,3 +61,4 @@ export default async function handler(req, res) {
   cached ??= createConfiguredHandler();
   return cached(req, res);
 }
+

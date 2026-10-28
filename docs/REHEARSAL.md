@@ -32,7 +32,7 @@
 - [ ] Keep walkways and exits clear of shelving props, cables, and streamers.
 - [ ] Disable sleep/screensavers on event computers as permitted; keep scanner tabs active.
 - [ ] Check Supabase is active, deployed credentials work, and quotas are sufficient before October 28.
-- [ ] Choose a staff-only passphrase and keep it off public screens and printouts.
+- [ ] Choose each computer on the homepage and verify its assigned tabs, scan color, and browser focus.
 - [ ] Keep paper targets and a manual tally option available for an outage.
 
 ## Projection and cutout trial
@@ -49,3 +49,4 @@
 4. Scan twice more, allowing at least 1.2 seconds between accepted hits from the same blaster. Different hunters may contribute immediately. Confirm only three hits score, the total bonus is 300, the code disappears, and the boss fades.
 5. In a separate trial, leave the boss alive: it must stop accepting hits when PvP begins at five minutes. With finale disabled, it remains active until the six-minute deadline.
 6. Choose Next group: health and damage must reset, with the patch alone visible again. Verify the projector’s physical scan range and that the small station strip remains readable.
+

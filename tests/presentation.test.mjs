@@ -110,7 +110,8 @@ test('boss damage display keeps its QR stable, hides it after defeat, and clears
   assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),true);
   assert.equal(ids['boss-thanks'].hidden,false);assert.equal(ids['boss-taunt'].hidden,true);assert.equal(ids['boss-hud'].hidden,true);
   state.phase='results';updateBoss(document,state);
-  for(const id of ['boss-float','boss-hud','boss-taunt','boss-thanks'])assert.equal(ids[id].hidden,true,`${id} clears when the round ends, even with defeated boss state`);
+  for(const id of ['boss-float','boss-hud','boss-taunt'])assert.equal(ids[id].hidden,true,`${id} clears when the round ends, even with defeated boss state`);
+  assert.equal(ids['boss-thanks'].hidden,false,'Jebediah keeps congratulating the team after a boss defeat without PvP');
   assert.equal(ids['boss-code'].style.visibility,'hidden');assert.equal(ids['boss-ghost'].dataset.damage,'0');
   assert.equal(ids['boss-status'].textContent,'');
   updateBoss(document,{roundId:'two',phase:'lobby',startedAt:null,boss:{status:'waiting',health:9,maxHealth:9,hits:[]}});
@@ -170,4 +171,5 @@ test('boss cycles all five requested taunts every six seconds only while active'
   for(const status of ['waiting','defeated'])assert.equal(bossTaunt({...state,boss:{status}}),null);
   assert.deepEqual(BOSS_TAUNTS,['It’s on order, it’ll be here in 4-6 months','No packing slip','Shipping was delayed','There are no more LTM-1U','The carts are gone']);
 });
+
 
