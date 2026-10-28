@@ -124,3 +124,5 @@ Open `/?view=boss` on a dedicated display before the round. Until four minutes h
 Connected scanner stations automatically use the same patch scenery during ghost hunting and PvP. Their small bottom strip shows identity, the most recent scan result, and focus/connection status. The pairing form and blaster illustration return outside gameplay. Inactive-window and connection warnings stay visible in the strip; the scenery does not interfere with keyboard scanner capture. PvP warms the scene tint. Motion is reduced for devices requesting reduced motion.
 
 The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.
+
+The lobby leaderboard ranks scores from up to 100 previous rounds, showing as many rows as fit the display and recalculating on resize. Shared history survives display reloads, Next group, station resets, and new name entry. It switches to the current group when their round starts.

@@ -168,3 +168,38 @@ test('scanner delivers the boss code from keyboard input once per Enter terminat
   scanner({key:'Enter'});scanner({key:'Enter'});
   assert.deepEqual(hits,['Boss Ghost']);
 });
+
+test('previous scores survive next group, lobby edits, repeated resets, and public reloads without exposing credentials',()=>{
+  const {s,auth}=setup(false,1);
+  scan(s,auth.Red,'Ghost 1',2000);apply(s,'finish',{},ref,3000);
+  const next=apply(s,'newRound',{},ref,3001).replacement;
+  assert.equal(next.players.Red.score,0);assert.equal(next.players.Red.name,'');
+  const old=publicState(next,3001).previousRound;
+  assert.equal(old.players[0].name,'Red Hunter');assert.equal(old.players[0].score,100);
+  for(const field of ['tokenId','lastScan','captured','epoch'])assert.equal(field in old.players[0],false);
+  apply(next,'name',{color:'Red',name:'New Hunter'},ref,3002);
+  assert.equal(publicState(next,3002).previousRound.players[0].name,'Red Hunter');
+  const reset=apply(next,'reset',{},ref,3003).replacement;
+  assert.deepEqual(publicState(reset,3003).previousRound,old);
+  const again=apply(reset,'newRound',{},ref,3004).replacement;
+  assert.deepEqual(again.previousRound,old);
+  scan(next,auth.Red,'TEST WAND',3005);apply(next,'start',{},ref,3006);
+  scan(next,auth.Red,'Ghost 2',3100);scan(next,auth.Red,'Ghost 3',3200);
+  apply(next,'finish',{},ref,3300);
+  const latest=apply(next,'reset',{},ref,3400).replacement;
+  assert.equal(latest.previousRound.players[0].name,'New Hunter');assert.equal(latest.previousRound.players[0].score,200);
+  assert.equal(publicState(initialState(),1000).previousRound,null);
+});
+
+test('score history retains multiple rounds once each across lobby resets',()=>{
+  const {s,auth}=setup(false,1);scan(s,auth.Red,'Ghost 1',2000);apply(s,'finish',{},ref,3000);
+  let next=apply(s,'newRound',{},ref,3001).replacement;
+  apply(next,'name',{color:'Red',name:'Second Hunter'},ref,3002);scan(next,auth.Red,'TEST WAND',3003);apply(next,'start',{},ref,3004);
+  scan(next,auth.Red,'Ghost 1',3100);scan(next,auth.Red,'Ghost 2',3200);apply(next,'finish',{},ref,3300);
+  next=apply(next,'newRound',{},ref,3400).replacement;
+  assert.deepEqual(publicState(next,3400).scoreHistory.map(r=>r.players[0].score),[100,200]);
+  next=apply(next,'reset',{},ref,3500).replacement;
+  assert.equal(next.scoreHistory.length,2,'lobby resets do not duplicate rounds');
+  const legacy={...next,scoreHistory:undefined};
+  assert.equal(publicState(legacy,3600).scoreHistory.length,1,'previous single-round snapshots remain usable');
+});

@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=bats-20261028-1';
+import { createScanner } from '/scanner.js?v=scores-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=bats-20261028-1';
-import { createGameAudio } from '/audio.js?v=bats-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=bats-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=bats-20261028-1';
+import { icon } from '/icons.js?v=scores-20261028-1';
+import { createGameAudio } from '/audio.js?v=scores-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=scores-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=scores-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -206,12 +206,25 @@ function render() {
     $('intro-announcement').innerHTML = icon(state.phase === 'results' ? 'trophy' : state.phase === 'pvp' ? 'alert' : 'ghost') + `<span>${announcement}</span>`;
   }
   if (view === 'leaderboard') {
-    const players = state.players.filter(p=>p.name);
-    $('standings').innerHTML = players.filter(p=>!p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
-    $('vanquished').innerHTML = players.filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
-    $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
-    $('phase-label').textContent = ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
-    $('latest').textContent = state.log.at(-1)?.message || 'Choose your blaster and get instructions';
+    const history = [...(state.scoreHistory || (state.previousRound ? [state.previousRound] : []))];
+    if (state.phase === 'results' && state.startedAt != null && !history.some(round=>round.roundId === state.roundId)) history.push({roundId:state.roundId,players:state.players});
+    const previous = ['lobby','results'].includes(state.phase) && history.length ? history.at(-1) : null;
+    const players = (previous ? history.flatMap(round=>round.players) : state.players).filter(p=>p.name);
+    $('clock').dataset.previous = String(!!previous);
+    $('standings').innerHTML = players.filter(p=>previous || !p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts${previous && p.vanquished ? ' · Vanquished' : ''}</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
+    $('vanquished').innerHTML = (previous ? [] : players).filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
+    $('board-title').textContent = previous ? 'Past rounds’ high scores' : state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
+    $('phase-label').textContent = previous ? 'PREVIOUS ROUNDS' : ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
+    $('latest').textContent = previous ? `${history.length} previous round${history.length === 1 ? '' : 's'}` : state.log.at(-1)?.message || 'Choose your blaster and get instructions';
+    if (previous) {
+      const rows = [...$('standings').querySelectorAll('.score-row')];
+      const top = $('standings').getBoundingClientRect().top;
+      const rowHeight = rows[0]?.getBoundingClientRect().height || 90;
+      const footer = $('latest').closest('.ticker').getBoundingClientRect().height || 50;
+      const fits = Math.max(1, Math.floor(((window.innerHeight || 900) - top - footer - 48) / rowHeight));
+      rows.forEach((row,i)=>{row.hidden = i >= fits;});
+      $('latest').textContent += ` · Showing ${Math.min(fits,rows.length)} of ${rows.length} scores`;
+    }
   }
   if (view === 'targets') {
     $('target-phase').textContent = state.phase === 'pvp' ? 'The ghosts have possessed your teammates! Scan their chest badges!' : state.phase === 'results' ? 'Round complete. Thank you, ghost patrol!' : 'Each ghost is worth 100 points. Capture each one once.';
@@ -243,6 +256,7 @@ async function poll() {
 $('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
 $('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(['atmosphere','boss','station'].includes(view) && e?.detail > 0) $('fullscreen').blur(); } };
 shell();
+if (view === 'leaderboard') window.addEventListener('resize',render);
 if (['atmosphere','boss','station'].includes(view)) {
   const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
   document.addEventListener('pointermove',showControls); document.addEventListener('pointerdown',showControls); document.addEventListener('keydown',e=>{ if (e.key === 'Tab' || e.key === 'Escape') showControls(); }); showControls();
@@ -260,7 +274,7 @@ poll();
 setInterval(poll, ['station','atmosphere','boss'].includes(view) ? 2000 : 15000);
 setInterval(() => {
   if ($('clock') && state) {
-    const ms = state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
+    const ms = $('clock').dataset.previous === 'true' ? 0 : state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
     const sec = Math.ceil(ms/1000); $('clock').textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
     $('clock').closest('.clock').classList.toggle('is-urgent', ms > 0 && ms <= 30000 && state.phase !== 'lobby');
   }
