@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=scores-20261028-1';
+import { createScanner } from '/scanner.js?v=taunts-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=scores-20261028-1';
-import { createGameAudio } from '/audio.js?v=scores-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=scores-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=scores-20261028-1';
+import { icon } from '/icons.js?v=taunts-20261028-1';
+import { createGameAudio } from '/audio.js?v=taunts-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=taunts-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=taunts-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',

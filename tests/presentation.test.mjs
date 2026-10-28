@@ -116,3 +116,12 @@ test('bat silhouettes cross all projection scenes with finite wing motion and a 
   }
   assert.notEqual(sampleBat(1,0,0).flap,sampleBat(1,0,1).flap);
 });
+
+test('boss cycles all five requested taunts every six seconds only while active',async()=>{
+  const {BOSS_TAUNTS,bossTaunt}=await import('../public/patch-scene.js');
+  const state={startedAt:1000,serverNow:241000,boss:{status:'active'}};
+  for(let i=0;i<10;i++)assert.equal(bossTaunt({...state,serverNow:241000+i*6000}),BOSS_TAUNTS[i%5]);
+  assert.equal(bossTaunt({...state,serverNow:246999}),BOSS_TAUNTS[0]);
+  for(const status of ['waiting','defeated'])assert.equal(bossTaunt({...state,boss:{status}}),null);
+  assert.deepEqual(BOSS_TAUNTS,['It’s on order, it’ll be here in 4-6 months','No packing slip','Shipping was delayed','There are no more LTM-1U','The carts are gone']);
+});

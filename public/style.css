@@ -70,3 +70,8 @@ main{position:relative;z-index:1;width:100%;max-width:1680px;margin:auto;padding
 @media(prefers-reduced-motion:reduce){.boss-float,.patch-fog{animation:none}.boss-hit{animation:none}.boss-ghost.is-defeated{animation:none;opacity:0}}
 
 .station-playing.station-connection-issue #focus-note{color:#e7b685;max-width:190px}
+
+/* Taunts stay above the QR's scan area, in the same muted palette as the patch. */
+.boss-taunt{position:fixed;z-index:3;top:5vh;right:3vw;width:25vw;max-height:28vh;overflow:auto;padding:18px 22px;border:2px solid #a99caf;border-radius:22px 22px 4px 22px;background:#292332;color:#f0ebde;font:400 clamp(18px,2vw,34px)/1.25 var(--display);letter-spacing:.03em;box-shadow:0 5px 0 #0c0c17;pointer-events:none}.taunt-enter{animation:taunt-enter .35s ease-out}@keyframes taunt-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-aspect-ratio:1/1){.boss-taunt{width:39vw;right:3vw;padding:12px;font-size:clamp(17px,3.5vw,27px)}.boss-hud{left:3vw;right:auto;max-width:50vw;text-align:left}.boss-hud h1{font-size:clamp(25px,5vw,38px)}.boss-health{justify-content:start}}
+@media(prefers-reduced-motion:reduce){.taunt-enter{animation:none}}
