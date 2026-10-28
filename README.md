@@ -2,7 +2,7 @@
 
 First playable prototype for the October 28, 2026 department Halloween event.
 
-Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub and scan its test QR. Staff then start the round. The shared display shows the leaderboard between rounds and switches to Jebediah’s orientation when a round starts. The repository includes Jebediah and the other supplied art, printable QR targets, and target and atmosphere screens.
+Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub and scan its test QR. Staff then start the round. The shared display shows Jebediah’s orientation during setup, then live scores during play and final scores until staff select Next group. The repository includes Jebediah and the other supplied art, printable QR targets, and target and atmosphere screens.
 
 ## Run a local trial
 
@@ -31,7 +31,7 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 2. Privately turn off the surprise PvP finale for the one-player trial. Tap **Return to welcome screen**. The player-facing setup contains no finale setting.
 3. On a scanner’s workstation, open `/?view=station`. Select its computer name; the assigned scanner color appears automatically. Enter the passphrase and connect. The browser stores a signed player token, not the staff passphrase.
 4. On the welcome/referee screen, the player enters and saves their name without unlocking Staff controls. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
-5. On a separate display, open `/?view=leaderboard`. It shows previous scores while idle. Start the round from private staff controls: the same display automatically switches to Jebediah’s orientation for the hunt and finale, then returns to scores when the round ends. No navigation or second display is needed.
+5. On a separate display, open `/?view=leaderboard`. It shows orientation during setup. Start the round from private staff controls: the display switches to the live leaderboard for the hunt and finale. Final scores remain visible after the round ends, until staff select **Next group**, which returns the display to orientation. No navigation or second display is needed.
 6. Open `/print.html?kind=ghosts` and print Ghost 1. Scan it: the player gets **100 points**. Scan it again: the score stays **100**. A second player may score that same ghost independently.
 7. End the round. **Next group** clears names and scores while keeping workstation assignments. **Reset lobby & release all** also invalidates station tokens; staff must reconnect them.
 
@@ -44,7 +44,7 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 | `/` | Staff session chooser |
 | `/?view=referee` | Landscape-friendly referee and player setup |
 | `/?view=station` | Scanner capture, with staff pairing once |
-| `/?view=leaderboard` | Shared TV display: leaderboard while idle or complete, orientation during a round |
+| `/?view=leaderboard` | Shared TV display: orientation in setup, live leaderboard during play, final scores until Next group |
 | `/?view=intro` | Alternate link to the same automatic leaderboard/orientation display |
 | `/?view=boss` | Pumpkin patch, then the nine-hit Patch Phantom at 1:20 |
 | `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
@@ -119,13 +119,10 @@ Print `/print.html?kind=ghosts` on letter paper at 100% scale. Each page is one 
 
 ## Boss and scanner scenery
 
-Open `/?view=boss` on a dedicated display before the round. Until 80 seconds have elapsed, it shows only the quiet patch, a scarecrow silhouette, and slowly moving fog after the shared header fades. Move the pointer, tap, or press Tab to restore full-screen and sound controls. The boss drifts slowly across a 75-second sweep with an upright, unfiltered QR and a four-module white quiet zone. Each hit consumes one health segment and adds visible damage; after the ninth, the ghost fades away and Jebediah Crow appears to thank the players. Jebediah also appears when the battle window ends at PvP or the final buzzer. Taunts appear in a speech bubble attached to the moving boss, with its tail pointing toward him. Nine health segments and progressive cracks show damage; the next group resets the encounter. Multiple displays reflect the same encounter, rather than creating extra bosses.
+Open `/?view=boss` on a dedicated display before the round. Until 80 seconds have elapsed, it shows only the quiet patch, a scarecrow silhouette, and slowly moving fog after the shared header fades. Move the pointer, tap, or press Tab to restore full-screen and sound controls. The boss drifts slowly across a 75-second sweep with an upright, unfiltered QR and a four-module white quiet zone. Each hit consumes one health segment and adds visible damage; after the ninth, the ghost fades away and Jebediah Crow appears to thank the players. Jebediah also appears at the start of PvP while gameplay continues. When the round ends, the boss, QR, health display, speech bubble, and Jebediah all clear immediately, leaving only the empty patch. The boss has no printed name tag; the HUD uses the generic Boss Battle heading. Taunts appear in a speech bubble attached to the moving boss, with its tail pointing toward him. Nine health segments and progressive cracks show damage; the next group resets the encounter. Multiple displays reflect the same encounter, rather than creating extra bosses.
 
 Connected scanner stations automatically use the same patch scenery during ghost hunting and PvP. Their small bottom strip shows identity, the most recent scan result, and focus/connection status. The pairing form and blaster illustration return outside gameplay. Inactive-window and connection warnings stay visible in the strip; the scenery does not interfere with keyboard scanner capture. PvP warms the scene tint. Motion is reduced for devices requesting reduced motion.
 
 The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.
 
-The lobby leaderboard ranks scores from up to 100 previous rounds, showing as many rows as fit the display and recalculating on resize. Shared history survives display reloads, Next group, station resets, and new name entry. Both display links switch to Jebediah’s orientation during the hunt and finale, and return to the leaderboard when the round ends. Refreshing during an active round opens orientation automatically. Switching happens in place, preserving fullscreen and enabled audio. The home screen has one combined Leaderboard & orientation tile.
-
-Name entry on the shared welcome hub needs no sign-in or staff passphrase. Players choose their color’s row and save a name in the lobby. Names lock when the round starts. Station pairing, releases, settings, and round controls remain staff-only.
-
+Both display links show orientation while the lobby is being prepared. Starting a round switches to the current group’s live leaderboard, which remains on screen through results until staff select **Next group** (or reset the lobby). Completed standings include vanquished players. Old round scores remain stored in shared history, but do not replace this group’s final standings. Refreshing selects the correct display from the shared server phase, including results. Switching happens in place, preserving fullscreen and enabled audio. The home screen has one combined Leaderboard & orientation tile.

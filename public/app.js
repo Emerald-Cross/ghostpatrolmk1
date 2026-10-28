@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=boss9-20261028-1';
+import { createScanner } from '/scanner.js?v=display-fix-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=boss9-20261028-1';
-import { createGameAudio } from '/audio.js?v=boss9-20261028-1';
-import { patchScene, bossGhost, bossThanks, updateBoss } from '/patch-scene.js?v=boss9-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=boss9-20261028-1';
+import { icon } from '/icons.js?v=display-fix-20261028-1';
+import { createGameAudio } from '/audio.js?v=display-fix-20261028-1';
+import { patchScene, bossGhost, bossThanks, updateBoss } from '/patch-scene.js?v=display-fix-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=display-fix-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -21,7 +21,7 @@ const view = new URLSearchParams(location.search).get('view') || 'home';
 const sharedDisplay = ['leaderboard', 'intro'].includes(view);
 const requestedScene = Number(new URLSearchParams(location.search).get('scene'));
 const scene = [1,2,3].includes(requestedScene) ? requestedScene : 1;
-document.body.classList.add(`${sharedDisplay ? 'leaderboard' : view}-view`);
+document.body.classList.add(`${sharedDisplay ? 'intro' : view}-view`);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const options = items => items.map((s,i) => `<option value="${esc(s)}"${i === 0 ? ' selected' : ''}>${esc(s)}</option>`).join('');
 let state = null, lastGood = 0, offset = 0, staffOpen = false, connectionHealthy = false, stationRound;
@@ -68,7 +68,7 @@ function shell() {
       `<section class="launch-grid" aria-label="Game screens">${[
         launchTile('referee', 'setup', 'Setup Station', 'Names, wand checks, and round controls.'),
         launchTile('station', 'blaster', 'Wand station', 'Scanner pairing'),
-        launchTile('leaderboard', 'trophy', 'Leaderboard & orientation', 'Past scores between rounds. Meet Jebediah when the hunt starts.'),
+        launchTile('leaderboard', 'trophy', 'Leaderboard & orientation', 'Meet Jebediah before play. Scores stay up until the next group.'),
         launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
         launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.'),
         launchTile('boss', 'ghost', 'Boss ghost', 'A late-round phantom. Nine hits to vanquish.')
@@ -118,7 +118,7 @@ function shell() {
     });
     window.addEventListener('focus', render); window.addEventListener('blur', render);
   } else if (sharedDisplay) {
-    app.innerHTML = `<section id="leaderboard-screen" aria-label="Leaderboard"><section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">02:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div></section><section id="orientation-screen" aria-label="Orientation" hidden>` + hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div></section>`;
+    app.innerHTML = `<section id="leaderboard-screen" aria-label="Leaderboard" hidden><section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">02:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div></section><section id="orientation-screen" aria-label="Orientation">` + hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div></section>`;
   } else if (view === 'targets') {
     app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map((id,i)=>`<article><span class="ghost-sprite ghost-${i}" aria-hidden="true"></span><div class="qr-frame"><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code" width="330" height="330"></div><h2>Ghost ${id}</h2></article>`).join('')}</section><img id="target-reaction" class="target-reaction" src="/assets/jebediah-alert.webp" alt="Jebediah reacting to the ghosts" hidden>`;
   } else if (view === 'atmosphere') {
@@ -127,7 +127,7 @@ function shell() {
     projection = mountAtmosphere($('projection'), scene);
   } else if (view === 'boss') {
     document.body.classList.add('cinematic');
-    app.innerHTML = `${patchScene()}${bossGhost()}${bossThanks()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">THE PATCH PHANTOM</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
+    app.innerHTML = `${patchScene()}${bossGhost()}${bossThanks()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">BOSS BATTLE</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -137,7 +137,7 @@ function render() {
   if (!state) return;
   document.body.dataset.phase = state.phase;
   const lobby = state.phase === 'lobby';
-  const orienting = sharedDisplay && ['pve', 'pvp'].includes(state.phase);
+  const orienting = sharedDisplay && lobby;
   if (sharedDisplay) {
     $('leaderboard-screen').hidden = orienting;
     $('orientation-screen').hidden = !orienting;
@@ -203,33 +203,21 @@ function render() {
   }
   if (orienting) {
     const character = $('hero-character');
-    const art = state.phase === 'pvp' ? 'alert' : 'welcome';
+    const art = 'welcome';
     if (character.dataset.art !== art) { character.src = `/assets/jebediah-${art}.webp`; character.dataset.art = art; }
     $('intro-roster').innerHTML = state.players.length ? state.players.map(p=>`<div class="intro-player"><span class="swatch ${p.color.toLowerCase()}"></span><strong>${esc(p.name || p.color)}</strong><span>${p.ready ? '✓ Ready' : 'Test your blaster'}</span></div>`).join('') : '<p>Your team is assembling…</p>';
-    $('intro-announcement').hidden = false;
-    const announcement = state.phase === 'pvp' ? 'Ghosts have possessed your fellow hunters! BLAST THEM!' : 'The hunt is on! Find and blast the ghosts around the patch.';
-    $('intro-announcement').innerHTML = icon(state.phase === 'pvp' ? 'alert' : 'ghost') + `<span>${announcement}</span>`;
+    $('intro-announcement').hidden = true;
+    $('intro-announcement').innerHTML = '';
   }
   if (sharedDisplay && !orienting) {
-    const history = [...(state.scoreHistory || (state.previousRound ? [state.previousRound] : []))];
-    if (state.phase === 'results' && state.startedAt != null && !history.some(round=>round.roundId === state.roundId)) history.push({roundId:state.roundId,players:state.players});
-    const previous = ['lobby','results'].includes(state.phase) && history.length ? history.at(-1) : null;
-    const players = (previous ? history.flatMap(round=>round.players) : state.players).filter(p=>p.name);
-    $('clock').dataset.previous = String(!!previous);
-    $('standings').innerHTML = players.filter(p=>previous || !p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts${previous && p.vanquished ? ' · Vanquished' : ''}</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
-    $('vanquished').innerHTML = (previous ? [] : players).filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
-    $('board-title').textContent = previous ? 'Past rounds’ high scores' : state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
-    $('phase-label').textContent = previous ? 'PREVIOUS ROUNDS' : ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
-    $('latest').textContent = previous ? `${history.length} previous round${history.length === 1 ? '' : 's'}` : state.log.at(-1)?.message || 'Choose your blaster and get instructions';
-    if (previous) {
-      const rows = [...$('standings').querySelectorAll('.score-row')];
-      const top = $('standings').getBoundingClientRect().top;
-      const rowHeight = rows[0]?.getBoundingClientRect().height || 90;
-      const footer = $('latest').closest('.ticker').getBoundingClientRect().height || 50;
-      const fits = Math.max(1, Math.floor(((window.innerHeight || 900) - top - footer - 48) / rowHeight));
-      rows.forEach((row,i)=>{row.hidden = i >= fits;});
-      $('latest').textContent += ` · Showing ${Math.min(fits,rows.length)} of ${rows.length} scores`;
-    }
+    const completed = state.phase === 'results';
+    const players = state.players.filter(p=>p.name);
+    $('clock').dataset.previous = 'false';
+    $('standings').innerHTML = players.filter(p=>completed || !p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts${completed && p.vanquished ? ' · Vanquished' : ''}</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
+    $('vanquished').innerHTML = (completed ? [] : players).filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
+    $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
+    $('phase-label').textContent = ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
+    $('latest').textContent = state.log.at(-1)?.message || 'Choose your blaster and get instructions';
   }
   if (view === 'targets') {
     $('target-phase').textContent = state.phase === 'pvp' ? 'The ghosts have possessed your teammates! Scan their chest badges!' : state.phase === 'results' ? 'Round complete. Thank you, ghost patrol!' : 'Each ghost is worth 100 points. Capture each one once.';

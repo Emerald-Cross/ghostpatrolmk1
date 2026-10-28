@@ -109,17 +109,22 @@ test('boss damage display keeps its QR stable, hides it after defeat, and clears
   assert.equal(ids['boss-code'].style.visibility,'hidden');assert.equal(ids['boss-heading'].textContent,'BOSS VANQUISHED!');
   assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),true);
   assert.equal(ids['boss-thanks'].hidden,false);assert.equal(ids['boss-taunt'].hidden,true);assert.equal(ids['boss-hud'].hidden,true);
+  state.phase='results';updateBoss(document,state);
+  for(const id of ['boss-float','boss-hud','boss-taunt','boss-thanks'])assert.equal(ids[id].hidden,true,`${id} clears when the round ends, even with defeated boss state`);
+  assert.equal(ids['boss-code'].style.visibility,'hidden');assert.equal(ids['boss-ghost'].dataset.damage,'0');
+  assert.equal(ids['boss-status'].textContent,'');
   updateBoss(document,{roundId:'two',phase:'lobby',startedAt:null,boss:{status:'waiting',health:9,maxHealth:9,hits:[]}});
   assert.equal(ids['boss-thanks'].hidden,true);assert.equal(hearts.filter(h=>h.classList.contains('is-spent')).length,0);
   for(const phase of ['pvp','results']){
     updateBoss(document,{roundId:'two',phase,startedAt:1000,boss:{status:'waiting',health:4,maxHealth:9,hits:[]}});
-    assert.equal(ids['boss-thanks'].hidden,false,'Jebediah also thanks players when the battle times out');
+    assert.equal(ids['boss-thanks'].hidden,phase==='results','Jebediah appears during the finale but clears at the round end');
     assert.equal(ids['boss-code'].style.visibility,'hidden');
   }
   updateBoss(document,{roundId:'three',phase:'lobby',startedAt:null});
   assert.equal(ids['boss-thanks'].hidden,true);
   assert.equal(ids['boss-float'].hidden,true);assert.equal(ids['boss-ghost'].dataset.damage,'0');assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),false);
   assert.match(bossThanks(),/jebediah-victory.webp/);assert.match(bossThanks(),/Thank you, ghost busters!/);
+  assert.doesNotMatch(bossGhost(),/THE PATCH PHANTOM/,'the boss has no name tag');
   assert.match(bossGhost(),/href="\/qr\/boss.svg"/);assert.match(patchScene(),/patch-silhouette/);
 });
 

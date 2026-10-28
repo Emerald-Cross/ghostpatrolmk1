@@ -49,46 +49,41 @@ const snapshot = (phase, extra = {}) => ({
   scoreHistory: [{ roundId: 'previous', players: [{ ...player, name: 'Previous hunter', score: 400 }] }], ...extra
 });
 for (const view of ['leaderboard', 'intro']) {
-  test(`${view} link switches from past scores to orientation and back without rebuilding the display`, () => {
+  test(`${view} shows orientation for setup, scores throughout play and results, then orientation for the next group`, () => {
     const d = display(view), orientation = d.get('orientation-screen'), board = d.get('leaderboard-screen');
-    d.render(snapshot('lobby'));
-    assert.equal(board.hidden, false); assert.equal(orientation.hidden, true);
-    assert.match(d.get('standings').innerHTML, /Previous hunter/);
-    assert.ok(d.classes.has('leaderboard-view')); assert.ok(!d.classes.has('intro-view'));
-    for (const phase of ['pve', 'pve', 'pvp']) {
+    assert.equal(orientation.hidden,false);assert.equal(board.hidden,true,'orientation is the initial shell');
+    d.render(snapshot('lobby',{startedAt:null}));
+    assert.equal(board.hidden,true);assert.equal(orientation.hidden,false);
+    assert.match(d.get('intro-roster').innerHTML,/Hunter/);
+    assert.equal(d.get('intro-announcement').hidden,true);
+    assert.ok(d.classes.has('intro-view'));assert.ok(!d.classes.has('leaderboard-view'));
+    for(const phase of ['pve','pve','pvp']){
       d.render(snapshot(phase));
-      assert.equal(board.hidden, true); assert.equal(orientation.hidden, false);
-      assert.ok(d.classes.has('intro-view')); assert.ok(!d.classes.has('leaderboard-view'));
-      assert.match(d.get('intro-roster').innerHTML, /Hunter/);
+      assert.equal(board.hidden,false);assert.equal(orientation.hidden,true);
+      assert.ok(d.classes.has('leaderboard-view'));assert.ok(!d.classes.has('intro-view'));
+      assert.match(d.get('standings').innerHTML,/>100</);
+      assert.doesNotMatch(d.get('standings').innerHTML,/Previous hunter/);
     }
-    assert.match(d.get('intro-announcement').innerHTML, /possessed/);
-    assert.equal(d.get('hero-character').src, '/assets/jebediah-alert.webp');
-    d.render(snapshot('results'));
-    assert.equal(board.hidden, false); assert.equal(orientation.hidden, true);
-    assert.match(d.get('standings').innerHTML, /Previous hunter/);
-    assert.match(d.get('standings').innerHTML, />100</);
-    // Next group preserves history, including the just-completed round.
-    d.render(snapshot('lobby', { players: [], startedAt: null, scoreHistory: [
-      ...snapshot('results').scoreHistory, { roundId: 'current', players: [player] }
-    ] }));
-    assert.match(d.get('standings').innerHTML, /Hunter/);
-    assert.equal(d.get('orientation-screen'), orientation);
-    assert.equal(d.get('leaderboard-screen'), board);
-    assert.equal(board.hidden, false);
+    d.render(snapshot('pvp',{players:[{...player,score:700}]}));
+    assert.match(d.get('standings').innerHTML,/>700</,'leaderboard stays live during the finale');
+    const results=snapshot('results',{players:[{...player,score:700},{...player,color:'Blue',name:'Vanquished hunter',score:0,vanquished:true}]});
+    d.render(results);d.render(results);
+    assert.equal(board.hidden,false);assert.equal(orientation.hidden,true);
+    assert.match(d.get('standings').innerHTML,/>700</);
+    assert.match(d.get('standings').innerHTML,/Vanquished hunter/);
+    assert.doesNotMatch(d.get('standings').innerHTML,/Previous hunter/,'results retain this group, not historical scores');
+    assert.equal(d.get('phase-label').textContent,'ROUND COMPLETE');
+    d.render(snapshot('lobby',{roundId:'next',players:[],startedAt:null}));
+    assert.equal(board.hidden,true);assert.equal(orientation.hidden,false);
+    assert.match(d.get('intro-roster').innerHTML,/assembling/);
+    assert.equal(d.get('orientation-screen'),orientation);assert.equal(d.get('leaderboard-screen'),board);
   });
-  test(`${view} link opens directly into an active round and resizes past scores when idle again`, () => {
-    const d = display(view);
-    d.render(snapshot('pve'));
-    assert.equal(d.get('orientation-screen').hidden, false);
-    assert.equal(d.get('leaderboard-screen').hidden, true);
-    assert.match(d.get('intro-announcement').innerHTML, /hunt is on/);
-    d.render(snapshot('lobby', { scoreHistory: [{ roundId: 'older', players: Array.from({ length: 20 }, () => player) }] }));
-    assert.equal(d.get('standings').rows.filter(row => !row.hidden).length, 6);
-    d.context.window.innerHeight = 600;
-    d.render(snapshot('lobby', { scoreHistory: [{ roundId: 'older', players: Array.from({ length: 20 }, () => player) }] }));
-    assert.equal(d.get('standings').rows.filter(row => !row.hidden).length, 3);
-    d.render(snapshot('lobby', { scoreHistory: [], startedAt: null, players: [] }));
-    assert.match(d.get('standings').innerHTML, /assembling/);
-    assert.equal(d.get('orientation-screen').hidden, true);
+  test(`${view} selects the correct screen on reload in every phase, including retained results`, () => {
+    for(const phase of ['lobby','pve','pvp','results']){
+      const d=display(view);
+      d.render(snapshot(phase,{startedAt:phase==='lobby'?null:1000}));
+      assert.equal(d.get('orientation-screen').hidden,phase!=='lobby');
+      assert.equal(d.get('leaderboard-screen').hidden,phase==='lobby');
+    }
   });
 }
