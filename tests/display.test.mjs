@@ -48,6 +48,22 @@ const snapshot = (phase, extra = {}) => ({
   phase, roundId: 'current', startedAt: 1000, endsAt: 121000, players: [player], log: [],
   scoreHistory: [{ roundId: 'previous', players: [{ ...player, name: 'Previous hunter', score: 400 }] }], ...extra
 });
+test('referee instructions describe boss-driven rounds and the display-only countdown', () => {
+  const d = display('referee');
+  d.render(snapshot('pve', { players: [] }));
+  const instructions = d.get('timing-note').textContent;
+  assert.match(instructions, /boss appears after 80 seconds and takes 9 hits/i);
+  assert.match(instructions, /if the finale is enabled, PvP continues until one hunter remains/i);
+  assert.match(instructions, /reaching zero does not end the round/i);
+  assert.match(instructions, /staff may end the round manually/i);
+  assert.doesNotMatch(instructions, /5 min hunt|6 min hunt|automatic/i);
+
+  const board = display('leaderboard').get('app').innerHTML;
+  assert.match(board, /aria-label="Decorative round countdown"/);
+  assert.match(board, /Decorative display · round continues at 0/);
+  assert.doesNotMatch(board, /Round countdown/);
+});
+
 for (const view of ['leaderboard', 'intro']) {
   test(`${view} shows orientation for setup, scores throughout play and results, then orientation for the next group`, () => {
     const d = display(view), orientation = d.get('orientation-screen'), board = d.get('leaderboard-screen');
