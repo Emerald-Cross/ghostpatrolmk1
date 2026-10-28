@@ -215,7 +215,7 @@ function render() {
     $('clock').dataset.previous = 'false';
     $('standings').innerHTML = players.filter(p=>completed || !p.vanquished).sort((a,b)=>b.score-a.score || a.name.localeCompare(b.name)).map((p,i)=>`<li class="score-row ${p.color.toLowerCase()}"><span class="row-rank">${String(i+1).padStart(2,'0')}</span><span class="swatch ${p.color.toLowerCase()}"></span><div class="row-player"><h2>${esc(p.name)}</h2><small>${p.color} scanner · ${p.captures} ghosts${completed && p.vanquished ? ' · Vanquished' : ''}</small></div><div class="row-score"><strong class="score-value">${p.score.toLocaleString()}</strong><span>POINTS</span></div></li>`).join('') || '<li class="empty-patch"><img src="/assets/pumpkin.webp" alt="Orange pumpkin lantern" width="130" height="130"><h2>Your team is assembling…</h2></li>';
     $('vanquished').innerHTML = (completed ? [] : players).filter(p=>p.vanquished).map(p=>`<span><i class="swatch ${p.color.toLowerCase()}"></i>${esc(p.name)} · Vanquished${p.reason === 'tie' ? ` · ${p.frozenScore} frozen` : ''}</span>`).join('');
-    $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The patch is saved!' : 'Save the pumpkin patch.';
+    $('board-title').textContent = state.phase === 'pvp' ? 'Who’s haunting whom?' : state.phase === 'results' ? 'The pumpkin patch is saved!' : 'Save the pumpkin patch.';
     $('phase-label').textContent = ({ lobby: 'READY WHEN YOU ARE', pve: 'GHOST HUNT', pvp: 'FINAL SHOWDOWN', results: 'ROUND COMPLETE' })[state.phase];
     $('latest').textContent = state.log.at(-1)?.message || 'Choose your blaster and get instructions';
   }
