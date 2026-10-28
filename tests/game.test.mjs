@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { initialState, apply, tick, publicState, parseScan, HOLD_MS } from '../lib/game.mjs';
+import { initialState, apply, tick, publicState, parseScan, HOLD_MS, ROUND_DURATION_MS, PVP_START_MS, BOSS_APPEARS_MS, BOSS_HEALTH } from '../lib/game.mjs';
 import { createScanner } from '../public/scanner.js';
 import { signToken, verifyToken } from '../lib/auth.mjs';
 const ref = { role: 'referee' };
@@ -39,52 +39,71 @@ test('PvP setting is absent from public state, for either setting and both lobby
     const {s: running} = setup(enabled);
     const publicView = publicState(running, 2000);
     for (const field of ['pvpEnabled','pending','epoch','events','timing']) assert.equal(field in publicView, false);
-    assert.equal(publicView.endsAt-running.startedAt,360000);
+    assert.equal(publicView.endsAt-running.startedAt,ROUND_DURATION_MS);
     assert.equal('tokenId' in publicView.players[0],false);
   }
 });
-test('phase changes at five minutes; no ghost points during finale', () => {
+test('phase changes at 100 seconds; no ghost points during finale', () => {
   const {s,auth}=setup();
   scan(s,auth.Red,'Player Blue',2000); assert.equal(s.pending.length,0);
-  tick(s,301010); assert.equal(s.phase,'pvp');
-  scan(s,auth.Red,'Ghost 1',301011); assert.equal(s.players.Red.score,0);
+  tick(s,101010); assert.equal(s.phase,'pvp');
+  scan(s,auth.Red,'Ghost 1',101011); assert.equal(s.players.Red.score,0);
 });
-test('PvP off lasts six minutes and chest scans never eliminate', () => {
+test('two-minute round uses exact spawn, optional finale, and buzzer boundaries', () => {
+  assert.equal(ROUND_DURATION_MS,120000);assert.equal(BOSS_HEALTH,9);
+  for(const enabled of [true,false]){
+    const {s}=setup(enabled);const start=s.startedAt;
+    assert.equal(s.endsAt,start+120000);
+    tick(s,start+79999);assert.equal(publicState(s,start+79999).boss.status,'waiting');
+    tick(s,start+80000);assert.equal(publicState(s,start+80000).boss.status,'active');
+    tick(s,start+99999);assert.equal(s.phase,'pve');
+    tick(s,start+100000);assert.equal(s.phase,enabled?'pvp':'pve');
+    tick(s,start+119999);assert.notEqual(s.phase,'results');
+    tick(s,start+120000);assert.equal(s.phase,'results');
+  }
+});
+test('one hunter can deliver all nine boss hits before the shortened round ends', () => {
+  const {s,auth}=setup(false,1),at=s.startedAt+BOSS_APPEARS_MS;
+  for(let i=0;i<9;i++)scan(s,auth.Red,'Boss Ghost',at+i*1200);
+  assert.equal(publicState(s,at+9600).boss.status,'defeated');
+  assert.equal(s.players.Red.score,900);assert.ok(s.boss.defeatedAt<s.endsAt);
+});
+test('PvP off lasts two minutes and chest scans never eliminate', () => {
   const {s,auth}=setup(false);
-  tick(s,301010); assert.equal(s.phase,'pve');
-  scan(s,auth.Red,'Player Blue',301020); assert.equal(s.pending.length,0);
-  scan(s,auth.Red,'Ghost 1',361010); assert.equal(s.phase,'results'); assert.equal(s.players.Red.score,0);
+  tick(s,101010); assert.equal(s.phase,'pve');
+  scan(s,auth.Red,'Player Blue',101020); assert.equal(s.pending.length,0);
+  scan(s,auth.Red,'Ghost 1',121010); assert.equal(s.phase,'results'); assert.equal(s.players.Red.score,0);
 });
 test('ordinary elimination steals all points and rejects later scans by victim', () => {
   const {s,auth}=setup(); scan(s,auth.Red,'Ghost 1',2000); scan(s,auth.Blue,'Ghost 1',2000);
-  tick(s,301010); scan(s,auth.Red,'Player Blue',301020);
-  assert.equal(s.players.Blue.vanquished,false); tick(s,301020+HOLD_MS);
+  tick(s,101010); scan(s,auth.Red,'Player Blue',101020);
+  assert.equal(s.players.Blue.vanquished,false); tick(s,101020+HOLD_MS);
   assert.equal(s.players.Red.score,200); assert.equal(s.players.Blue.score,0); assert.equal(s.players.Blue.frozenScore,100);
   assert.equal(s.players.Blue.vanquished,true); assert.equal(s.phase,'results');
-  scan(s,auth.Blue,'Player Red',301300); assert.equal(s.players.Red.vanquished,false);
+  scan(s,auth.Blue,'Player Red',101300); assert.equal(s.players.Red.vanquished,false);
 });
 test('reciprocal blasts under 20ms freeze both scores without a transfer', () => {
   const {s,auth}=setup(); scan(s,auth.Red,'Ghost 1',2000); scan(s,auth.Blue,'Ghost 2',2000);
-  tick(s,301010); scan(s,auth.Red,'Player Blue',301020); scan(s,auth.Blue,'Player Red',301039.99);
-  tick(s,301300);
+  tick(s,101010); scan(s,auth.Red,'Player Blue',101020); scan(s,auth.Blue,'Player Red',101039.99);
+  tick(s,101300);
   for (const p of Object.values(s.players)) { assert.equal(p.vanquished,true); assert.equal(p.score,100); assert.equal(p.frozenScore,100); assert.equal(p.reason,'tie'); }
   assert.equal(s.phase,'results');
 });
 test('exactly 20ms is not a tie; repeated targeting does not duplicate loot', () => {
   const {s,auth}=setup(); scan(s,auth.Blue,'Ghost 1',2000);
-  tick(s,301010); scan(s,auth.Red,'Player Blue',301020); scan(s,auth.Red,'Player Blue',301021); scan(s,auth.Blue,'Player Red',301040);
-  tick(s,301400); assert.equal(s.players.Red.vanquished,false); assert.equal(s.players.Red.score,100);
+  tick(s,101010); scan(s,auth.Red,'Player Blue',101020); scan(s,auth.Red,'Player Blue',101021); scan(s,auth.Blue,'Player Red',101040);
+  tick(s,101400); assert.equal(s.players.Red.vanquished,false); assert.equal(s.players.Red.score,100);
 });
 test('three-way sequence conserves active points; one survivor ends finale', () => {
   const {s,auth}=setup(true,3); for (const a of Object.values(auth)) scan(s,a,'Ghost 1',2000);
-  tick(s,301010); scan(s,auth.Red,'Player Blue',301020); tick(s,301300);
-  assert.equal(s.phase,'pvp'); scan(s,auth.Green,'Player Red',301400); tick(s,301700);
+  tick(s,101010); scan(s,auth.Red,'Player Blue',101020); tick(s,101300);
+  assert.equal(s.phase,'pvp'); scan(s,auth.Green,'Player Red',101400); tick(s,101700);
   assert.equal(s.players.Green.score,300); assert.equal(s.phase,'results');
 });
 test('accepted pre-buzzer hit settles; post-buzzer scans cannot score', () => {
-  const {s,auth}=setup(true,3); scan(s,auth.Blue,'Ghost 1',2000); tick(s,301010);
-  scan(s,auth.Red,'Player Blue',361009); scan(s,auth.Green,'Player Red',361010);
-  tick(s,361300); assert.equal(s.players.Red.score,100); assert.equal(s.players.Red.vanquished,false); assert.equal(s.phase,'results');
+  const {s,auth}=setup(true,3); scan(s,auth.Blue,'Ghost 1',2000); tick(s,101010);
+  scan(s,auth.Red,'Player Blue',121009); scan(s,auth.Green,'Player Red',121010);
+  tick(s,121300); assert.equal(s.players.Red.score,100); assert.equal(s.players.Red.vanquished,false); assert.equal(s.phase,'results');
 });
 test('staff access, duplicate station claims, readiness, old round and revoked assignment', () => {
   let s=initialState(); assert.throws(()=>apply(s,'settings',{pvpEnabled:false},{role:'public'},1000),/Referee/);
@@ -115,34 +134,37 @@ test('signed roles expire and cannot be tampered with', () => {
   assert.throws(()=>verifyToken(token,'test signing secret',86401000),/expired/);
 });
 
-test('boss appears at four minutes, accepts three shared hits, rejects repeats, and awards exactly 300 points', () => {
-  const {s,auth}=setup();const at=s.startedAt+240000;
+test('boss appears at 80 seconds, accepts nine shared hits, rejects repeats, and awards exactly 900 points', () => {
+  const {s,auth}=setup();const at=s.startedAt+BOSS_APPEARS_MS;
   assert.deepEqual(parseScan('Boss Ghost'),{kind:'boss'});
   assert.equal(publicState(s,at-1).boss.status,'waiting');
   assert.equal(scan(s,auth.Red,'Boss Ghost',at-1).result,'Boss is not available.');
   assert.equal(publicState(s,at).boss.status,'active');
+  assert.equal(publicState(s,at).boss.appearsAt,at);
   assert.equal(scan(s,auth.Red,'Boss Ghost',at,'boss-hit-first').result,'Boss hit! +100');
   assert.equal(scan(s,auth.Red,'Boss Ghost',at+1,'boss-hit-first').result,'Duplicate delivery ignored.');
   assert.match(scan(s,auth.Red,'Boss Ghost',at+1199).result,/recharging/);
   assert.equal(scan(s,auth.Blue,'Boss Ghost',at+1199).result,'Boss hit! +100','another hunter can hit immediately');
-  assert.equal(publicState(s,at+1199).boss.health,1);
-  assert.equal(scan(s,auth.Red,'Boss Ghost',at+1200).result,'Boss vanquished! +100');
-  const boss=publicState(s,at+1200).boss;
-  assert.equal(boss.health,0);assert.equal(boss.status,'defeated');assert.equal(boss.hits.length,3);
-  assert.deepEqual(boss.hits.map(h=>h.color),['Red','Blue','Red']);
-  assert.equal(boss.defeatedAt,at+1200);
-  assert.equal(scan(s,auth.Blue,'Boss Ghost',at+2400).result,'Boss already vanquished!');
-  assert.equal(s.players.Red.score+s.players.Blue.score,300);
+  assert.equal(publicState(s,at+1199).boss.health,7);
+  for(let i=0;i<7;i++){
+    const result=scan(s,auth.Red,'Boss Ghost',at+1200*(i+1)).result;
+    assert.equal(result,i===6?'Boss vanquished! +100':'Boss hit! +100');
+  }
+  const boss=publicState(s,at+8400).boss;
+  assert.equal(boss.health,0);assert.equal(boss.status,'defeated');assert.equal(boss.hits.length,9);
+  assert.equal(boss.defeatedAt,at+8400);
+  assert.equal(scan(s,auth.Blue,'Boss Ghost',at+9600).result,'Boss already vanquished!');
+  assert.equal(s.players.Red.score+s.players.Blue.score,900);
   assert.equal(s.players.Red.captured.length,0,'boss damage does not inflate ordinary ghost captures');
 });
 
 test('boss closes at PvP, lasts to the buzzer without PvP, and resets cleanly across groups and old stored state', () => {
   for(const enabled of [true,false]){
     const {s,auth}=setup(enabled);const start=s.startedAt;
-    scan(s,auth.Red,'Boss Ghost',start+240000);
-    scan(s,auth.Blue,'Boss Ghost',start+300000);
+    scan(s,auth.Red,'Boss Ghost',start+BOSS_APPEARS_MS);
+    scan(s,auth.Blue,'Boss Ghost',start+PVP_START_MS);
     assert.equal(s.boss.hits.length,enabled?1:2);
-    assert.equal(publicState(s,start+300000).boss.status,enabled?'waiting':'active');
+    assert.equal(publicState(s,start+PVP_START_MS).boss.status,enabled?'waiting':'active');
     scan(s,auth.Red,'Boss Ghost',s.endsAt);assert.equal(s.phase,'results');
     assert.equal(s.boss.hits.length,enabled?1:2,'buzzer rejects boss damage');
     const next=apply(s,'newRound',{},ref,s.endsAt+1).replacement;
@@ -152,7 +174,7 @@ test('boss closes at PvP, lasts to the buzzer without PvP, and resets cleanly ac
 });
 
 test('boss rejects old round deliveries, eliminated hunters, and scans in lobby', () => {
-  const {s,auth}=setup(false,1);const at=s.startedAt+240000;
+  const {s,auth}=setup(false,1);const at=s.startedAt+BOSS_APPEARS_MS;
   const data={payload:'Boss Ghost',eventId:'old-boss-hit',roundId:'old-round'};
   assert.equal(apply(s,'scan',data,auth.Red,at).result,'Old round ignored.');
   s.players.Red.vanquished=true;
@@ -217,3 +239,4 @@ test('players can name themselves at the public hub in lobby while staff actions
   assert.throws(()=>apply(s,'name',{color:'Red',name:'Mid Game'},publicAuth,1006),/lobby/);
   assert.equal(s.players.Red.name,'My Own Name');
 });
+

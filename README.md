@@ -46,7 +46,7 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 | `/?view=station` | Scanner capture, with staff pairing once |
 | `/?view=leaderboard` | Shared TV display: leaderboard while idle or complete, orientation during a round |
 | `/?view=intro` | Alternate link to the same automatic leaderboard/orientation display |
-| `/?view=boss` | Pumpkin patch, then the three-hit Patch Phantom at four minutes |
+| `/?view=boss` | Pumpkin patch, then the nine-hit Patch Phantom at 1:20 |
 | `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
 | `/?view=atmosphere&scene=1` | Projection 1: crossing ghost drifts |
 | `/?view=atmosphere&scene=2` | Projection 2: a flowing ghost current |
@@ -61,9 +61,9 @@ Use the full screen button on desktop. iPhone Safari support must be verified on
 
 - Six paired scanner workstations, in order: `joshdesk` = Black, `barbdesk` = White, `center` = Blue, `studentprimary` = Red, `north` = Yellow, `east` = Green. The station page selects the assigned color automatically.
 - Each `Ghost 1` through `Ghost 18` awards **100 points once per player per round**. No cooldown between different players.
-- At **four minutes**, the Patch Phantom appears on the boss screen. Its `Boss Ghost` code accepts **three shared hits total**, awarding **100 points per hit** to the hunter who fires. One hunter can deliver all three, with a **1.2-second rearm** between their accepted hits; different hunters can hit immediately. Health, cracks, and the last hunter’s name update on all boss displays. The code disappears when defeated. It becomes unavailable during PvP or at the round deadline. **Next group** restores full health.
-- PvP enabled: five minutes of ghost hunting, then a one-minute surprise finale. Disabled: six minutes of ghost hunting. Setup happens before the timer starts.
-- Only a referee can set the finale, and only in the lobby. Public state never contains that setting. Public countdowns show the same six-minute total either way.
+- At **80 seconds**, the Patch Phantom appears on the boss screen. Its `Boss Ghost` code accepts **nine shared hits total**, awarding **100 points per hit** to the hunter who fires. One hunter can deliver all nine, with a **1.2-second rearm** between their accepted hits; different hunters can hit immediately. Health, cracks, and the last hunter’s name update on all boss displays. The code disappears when defeated. It becomes unavailable during PvP or at the round deadline. **Next group** restores full health.
+- PvP enabled: 100 seconds of ghost hunting, then a 20-second surprise finale. Disabled: two minutes of ghost hunting. Setup happens before the timer starts.
+- Only a referee can set the finale, and only in the lobby. Public state never contains that setting. Public countdowns show the same two-minute total either way.
 - In PvP, scanning `Player Red` (or another active opponent’s badge) eliminates that player and transfers their entire current score to the attacker. Further scans by eliminated players cannot score.
 - Reciprocal hits **less than 20 ms apart** tie: both are Vanquished, scores freeze, no transfer. Exactly 20 ms is not a tie.
 - Vanquished players leave active standings but remain recorded. PvP ends when fewer than two active players remain. If none remain, there is no surviving winner; frozen scores are historical, not active standings.
@@ -119,7 +119,7 @@ Print `/print.html?kind=ghosts` on letter paper at 100% scale. Each page is one 
 
 ## Boss and scanner scenery
 
-Open `/?view=boss` on a dedicated display before the round. Until four minutes have elapsed, it shows only the quiet patch, a scarecrow silhouette, and slowly moving fog after the shared header fades. Move the pointer, tap, or press Tab to restore full-screen and sound controls. The boss drifts slowly across a two-minute sweep with an upright, unfiltered QR and a four-module white quiet zone. Each hit consumes one health segment and adds visible damage; after the third, the ghost fades away and the vanquished message remains. Multiple displays reflect the same encounter, rather than creating extra bosses.
+Open `/?view=boss` on a dedicated display before the round. Until 80 seconds have elapsed, it shows only the quiet patch, a scarecrow silhouette, and slowly moving fog after the shared header fades. Move the pointer, tap, or press Tab to restore full-screen and sound controls. The boss drifts slowly across a 75-second sweep with an upright, unfiltered QR and a four-module white quiet zone. Each hit consumes one health segment and adds visible damage; after the ninth, the ghost fades away and Jebediah Crow appears to thank the players. Jebediah also appears when the battle window ends at PvP or the final buzzer. Taunts appear in a speech bubble attached to the moving boss, with its tail pointing toward him. Nine health segments and progressive cracks show damage; the next group resets the encounter. Multiple displays reflect the same encounter, rather than creating extra bosses.
 
 Connected scanner stations automatically use the same patch scenery during ghost hunting and PvP. Their small bottom strip shows identity, the most recent scan result, and focus/connection status. The pairing form and blaster illustration return outside gameplay. Inactive-window and connection warnings stay visible in the strip; the scenery does not interfere with keyboard scanner capture. PvP warms the scene tint. Motion is reduced for devices requesting reduced motion.
 

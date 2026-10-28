@@ -45,7 +45,7 @@ function display(view) {
 }
 const player = { name: 'Hunter', color: 'Red', score: 100, captures: 1, ready: true };
 const snapshot = (phase, extra = {}) => ({
-  phase, roundId: 'current', startedAt: 1000, endsAt: 361000, players: [player], log: [],
+  phase, roundId: 'current', startedAt: 1000, endsAt: 121000, players: [player], log: [],
   scoreHistory: [{ roundId: 'previous', players: [{ ...player, name: 'Previous hunter', score: 400 }] }], ...extra
 });
 for (const view of ['leaderboard', 'intro']) {

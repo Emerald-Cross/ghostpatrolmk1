@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=display-20261028-1';
+import { createScanner } from '/scanner.js?v=boss9-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=display-20261028-1';
-import { createGameAudio } from '/audio.js?v=display-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=display-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=display-20261028-1';
+import { icon } from '/icons.js?v=boss9-20261028-1';
+import { createGameAudio } from '/audio.js?v=boss9-20261028-1';
+import { patchScene, bossGhost, bossThanks, updateBoss } from '/patch-scene.js?v=boss9-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=boss9-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -71,7 +71,7 @@ function shell() {
         launchTile('leaderboard', 'trophy', 'Leaderboard & orientation', 'Past scores between rounds. Meet Jebediah when the hunt starts.'),
         launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
         launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.'),
-        launchTile('boss', 'ghost', 'Boss ghost', 'A late-round phantom. Three hits to vanquish.')
+        launchTile('boss', 'ghost', 'Boss ghost', 'A late-round phantom. Nine hits to vanquish.')
       ].join('')}</section><p class="footnote"><a href="/print.html">${icon('printer')}Print ghost targets, chest badges, or a test target</a></p>`;
   } else if (view === 'referee') {
     app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE OIT MATERIALS MANAGEMENT HALLOWEEN PUMPKIN PATCH</p><h1>You are professional ghost busters!</h1><p>Enter your name and test your blaster</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
@@ -118,7 +118,7 @@ function shell() {
     });
     window.addEventListener('focus', render); window.addEventListener('blur', render);
   } else if (sharedDisplay) {
-    app.innerHTML = `<section id="leaderboard-screen" aria-label="Leaderboard"><section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div></section><section id="orientation-screen" aria-label="Orientation" hidden>` + hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div></section>`;
+    app.innerHTML = `<section id="leaderboard-screen" aria-label="Leaderboard"><section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">02:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div></section><section id="orientation-screen" aria-label="Orientation" hidden>` + hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div></section>`;
   } else if (view === 'targets') {
     app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map((id,i)=>`<article><span class="ghost-sprite ghost-${i}" aria-hidden="true"></span><div class="qr-frame"><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code" width="330" height="330"></div><h2>Ghost ${id}</h2></article>`).join('')}</section><img id="target-reaction" class="target-reaction" src="/assets/jebediah-alert.webp" alt="Jebediah reacting to the ghosts" hidden>`;
   } else if (view === 'atmosphere') {
@@ -127,7 +127,7 @@ function shell() {
     projection = mountAtmosphere($('projection'), scene);
   } else if (view === 'boss') {
     document.body.classList.add('cinematic');
-    app.innerHTML = `${patchScene()}${bossGhost()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">THE PATCH PHANTOM</h1><div id="boss-health" class="boss-health" role="img" aria-label="3 of 3 health remaining">${[1,2,3].map(()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
+    app.innerHTML = `${patchScene()}${bossGhost()}${bossThanks()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">THE PATCH PHANTOM</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -279,7 +279,7 @@ poll();
 setInterval(poll, ['station','atmosphere','boss'].includes(view) ? 2000 : 15000);
 setInterval(() => {
   if ($('clock') && state) {
-    const ms = $('clock').dataset.previous === 'true' ? 0 : state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
+    const ms = $('clock').dataset.previous === 'true' ? 0 : state.phase === 'lobby' ? 120000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
     const sec = Math.ceil(ms/1000); $('clock').textContent = `${String(Math.floor(sec/60)).padStart(2,'0')}:${String(sec%60).padStart(2,'0')}`;
     $('clock').closest('.clock').classList.toggle('is-urgent', ms > 0 && ms <= 30000 && state.phase !== 'lobby');
   }
