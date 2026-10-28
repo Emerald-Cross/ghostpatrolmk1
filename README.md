@@ -62,12 +62,13 @@ Use the full screen button on desktop. iPhone Safari support must be verified on
 - Six paired scanner workstations, in order: `joshdesk` = Black, `barbdesk` = White, `center` = Blue, `studentprimary` = Red, `north` = Yellow, `east` = Green. The station page selects the assigned color automatically.
 - Each `Ghost 1` through `Ghost 18` awards **100 points once per player per round**. No cooldown between different players.
 - At **80 seconds**, the Patch Phantom appears on the boss screen. Its `Boss Ghost` code accepts **nine shared hits total**, awarding **100 points per hit** to the hunter who fires. One hunter can deliver all nine, with a **1.2-second rearm** between their accepted hits; different hunters can hit immediately. Health, cracks, and the last hunter’s name update on all boss displays. The code disappears when defeated. It becomes unavailable during PvP or at the round deadline. **Next group** restores full health.
-- PvP enabled: 100 seconds of ghost hunting, then a 20-second surprise finale. Disabled: two minutes of ghost hunting. Setup happens before the timer starts.
+- The two-minute countdown is decorative. Ghost hunting continues until the boss (appears at 80 seconds) is defeated, however long that takes.
+- PvP enabled: defeating the boss starts the surprise finale, which runs until one hunter remains. Disabled: defeating the boss ends the round. The referee can always end a round manually.
 - Only a referee can set the finale, and only in the lobby. Public state never contains that setting. Public countdowns show the same two-minute total either way.
 - In PvP, scanning `Player Red` (or another active opponent’s badge) eliminates that player and transfers their entire current score to the attacker. Further scans by eliminated players cannot score.
 - Reciprocal hits **less than 20 ms apart** tie: both are Vanquished, scores freeze, no transfer. Exactly 20 ms is not a tie.
 - Vanquished players leave active standings but remain recorded. PvP ends when fewer than two active players remain. If none remain, there is no surviving winner; frozen scores are historical, not active standings.
-- A short 200 ms settlement buffer allows competing hits to arrive. Hits must arrive before the round deadline; already accepted hits can settle after the buzzer.
+- A short 200 ms settlement buffer allows competing hits to arrive. There is no deadline; the finale ends when one hunter is left (or the referee ends it).
 
 ### Timing limitation
 
