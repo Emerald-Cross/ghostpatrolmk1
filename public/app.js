@@ -18,6 +18,7 @@ const stations = Object.keys(stationColors);
 const $ = id => document.getElementById(id);
 const app = $('app');
 const view = new URLSearchParams(location.search).get('view') || 'home';
+const gameTitle = "Save Jebediah Crow's pumpkin patch";
 const sharedDisplay = ['leaderboard', 'intro'].includes(view);
 const requestedScene = Number(new URLSearchParams(location.search).get('scene'));
 const scene = [1,2,3].includes(requestedScene) ? requestedScene : 1;
@@ -64,7 +65,7 @@ function launchTile(target, symbol, title, description) {
 }
 function shell() {
   if (view === 'home') {
-    app.innerHTML = hero('Ghosts have<br>taken over our<br>pumpkin patch!', 'Grab a blaster! Let’s save Halloween.') +
+    app.innerHTML = hero(gameTitle.replace(" Crow's", "<br>Crow's").replace(" patch", "<br>patch"), 'Grab a blaster! Let’s save Halloween.') +
       `<section class="launch-grid" aria-label="Game screens">${[
         launchTile('referee', 'setup', 'Setup Station', 'Names, wand checks, and round controls.'),
         launchTile('station', 'blaster', 'Wand station', 'Scanner pairing'),
