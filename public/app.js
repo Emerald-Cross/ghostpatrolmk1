@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=names-20261028-1';
+import { createScanner } from '/scanner.js?v=display-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=names-20261028-1';
-import { createGameAudio } from '/audio.js?v=names-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=names-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=names-20261028-1';
+import { icon } from '/icons.js?v=display-20261028-1';
+import { createGameAudio } from '/audio.js?v=display-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=display-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=display-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -18,9 +18,10 @@ const stations = Object.keys(stationColors);
 const $ = id => document.getElementById(id);
 const app = $('app');
 const view = new URLSearchParams(location.search).get('view') || 'home';
+const sharedDisplay = ['leaderboard', 'intro'].includes(view);
 const requestedScene = Number(new URLSearchParams(location.search).get('scene'));
 const scene = [1,2,3].includes(requestedScene) ? requestedScene : 1;
-document.body.classList.add(`${view}-view`);
+document.body.classList.add(`${sharedDisplay ? 'leaderboard' : view}-view`);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const options = items => items.map((s,i) => `<option value="${esc(s)}"${i === 0 ? ' selected' : ''}>${esc(s)}</option>`).join('');
 let state = null, lastGood = 0, offset = 0, staffOpen = false, connectionHealthy = false, stationRound;
@@ -67,8 +68,7 @@ function shell() {
       `<section class="launch-grid" aria-label="Game screens">${[
         launchTile('referee', 'setup', 'Setup Station', 'Names, wand checks, and round controls.'),
         launchTile('station', 'blaster', 'Wand station', 'Scanner pairing'),
-        launchTile('leaderboard', 'trophy', 'Live leaderboard', 'Show Leaderboard'),
-        launchTile('intro', 'pumpkin', 'Meet Jebediah', 'Orientation and testing'),
+        launchTile('leaderboard', 'trophy', 'Leaderboard & orientation', 'Past scores between rounds. Meet Jebediah when the hunt starts.'),
         launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
         launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.'),
         launchTile('boss', 'ghost', 'Boss ghost', 'A late-round phantom. Three hits to vanquish.')
@@ -117,10 +117,8 @@ function shell() {
       scanner(e);
     });
     window.addEventListener('focus', render); window.addEventListener('blur', render);
-  } else if (view === 'intro') {
-    app.innerHTML = hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div>`;
-  } else if (view === 'leaderboard') {
-    app.innerHTML = `<section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div>`;
+  } else if (sharedDisplay) {
+    app.innerHTML = `<section id="leaderboard-screen" aria-label="Leaderboard"><section class="score-header"><div><p class="eyebrow">SAVE HALLOWEEN</p><h1 id="board-title">Save the pumpkin patch.</h1></div><div class="clock" role="timer" aria-label="Round countdown"><span id="phase-label">READY WHEN YOU ARE</span><strong id="clock">06:00</strong></div></section><ol id="standings" class="standings" aria-label="Player rankings"></ol><section class="vanquished" id="vanquished"></section><div class="ticker">${icon('ghost')}<span id="latest">Choose your blaster and get instructions</span></div></section><section id="orientation-screen" aria-label="Orientation" hidden>` + hero('IT friends!<br>I need your help!', 'Spooky ghosts have taken over my pumpkin patch! Grab a neutron blaster and vanquish some ghosts! Help me save Halloween!') + `<section class="intro-bottom"><div class="panel">${testCode}</div><div class="panel"><p class="eyebrow">YOUR TEAM</p><div id="intro-roster"></div></div></section><div id="intro-announcement" class="announcement" hidden></div></section>`;
   } else if (view === 'targets') {
     app.innerHTML = `<section class="target-top"><p class="eyebrow">GHOSTS IN THE MACHINE</p><h1>Give these ghosts a blast.</h1><p id="target-phase">Each ghost is worth 100 points. Capture each one once.</p></section><section class="digital-targets">${[16,17,18].map((id,i)=>`<article><span class="ghost-sprite ghost-${i}" aria-hidden="true"></span><div class="qr-frame"><img src="/qr/ghost-${id}.svg" alt="Ghost ${id} QR code" width="330" height="330"></div><h2>Ghost ${id}</h2></article>`).join('')}</section><img id="target-reaction" class="target-reaction" src="/assets/jebediah-alert.webp" alt="Jebediah reacting to the ghosts" hidden>`;
   } else if (view === 'atmosphere') {
@@ -139,6 +137,13 @@ function render() {
   if (!state) return;
   document.body.dataset.phase = state.phase;
   const lobby = state.phase === 'lobby';
+  const orienting = sharedDisplay && ['pve', 'pvp'].includes(state.phase);
+  if (sharedDisplay) {
+    $('leaderboard-screen').hidden = orienting;
+    $('orientation-screen').hidden = !orienting;
+    document.body.classList.toggle('intro-view', orienting);
+    document.body.classList.toggle('leaderboard-view', !orienting);
+  }
   if (view === 'atmosphere') {
     projection?.update(state);
     $('projection-status').textContent = ({lobby:'Standby',pve:'Ghost hunt',pvp:'Final showdown',results:'Round complete'})[state.phase];
@@ -196,16 +201,16 @@ function render() {
       $('focus-note').textContent = !connectionHealthy ? 'Connection issue · scans unconfirmed' : document.hasFocus() ? '● Scanner capture armed' : '⚠ Window inactive · restore focus';
     }
   }
-  if (view === 'intro') {
+  if (orienting) {
     const character = $('hero-character');
-    const art = state.phase === 'pvp' ? 'alert' : state.phase === 'results' ? 'victory' : 'welcome';
+    const art = state.phase === 'pvp' ? 'alert' : 'welcome';
     if (character.dataset.art !== art) { character.src = `/assets/jebediah-${art}.webp`; character.dataset.art = art; }
     $('intro-roster').innerHTML = state.players.length ? state.players.map(p=>`<div class="intro-player"><span class="swatch ${p.color.toLowerCase()}"></span><strong>${esc(p.name || p.color)}</strong><span>${p.ready ? '✓ Ready' : 'Test your blaster'}</span></div>`).join('') : '<p>Your team is assembling…</p>';
-    $('intro-announcement').hidden = lobby;
-    const announcement = state.phase === 'pvp' ? 'Ghosts have possessed your fellow hunters! BLAST THEM!' : state.phase === 'results' ? 'The round is complete! Check your results.' : 'The hunt is on! Find and blast the ghosts around the patch.';
-    $('intro-announcement').innerHTML = icon(state.phase === 'results' ? 'trophy' : state.phase === 'pvp' ? 'alert' : 'ghost') + `<span>${announcement}</span>`;
+    $('intro-announcement').hidden = false;
+    const announcement = state.phase === 'pvp' ? 'Ghosts have possessed your fellow hunters! BLAST THEM!' : 'The hunt is on! Find and blast the ghosts around the patch.';
+    $('intro-announcement').innerHTML = icon(state.phase === 'pvp' ? 'alert' : 'ghost') + `<span>${announcement}</span>`;
   }
-  if (view === 'leaderboard') {
+  if (sharedDisplay && !orienting) {
     const history = [...(state.scoreHistory || (state.previousRound ? [state.previousRound] : []))];
     if (state.phase === 'results' && state.startedAt != null && !history.some(round=>round.roundId === state.roundId)) history.push({roundId:state.roundId,players:state.players});
     const previous = ['lobby','results'].includes(state.phase) && history.length ? history.at(-1) : null;
@@ -256,7 +261,7 @@ async function poll() {
 $('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
 $('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(['atmosphere','boss','station'].includes(view) && e?.detail > 0) $('fullscreen').blur(); } };
 shell();
-if (view === 'leaderboard') window.addEventListener('resize',render);
+if (sharedDisplay) window.addEventListener('resize',render);
 if (['atmosphere','boss','station'].includes(view)) {
   const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
   document.addEventListener('pointermove',showControls); document.addEventListener('pointerdown',showControls); document.addEventListener('keydown',e=>{ if (e.key === 'Tab' || e.key === 'Escape') showControls(); }); showControls();
@@ -284,3 +289,4 @@ setInterval(() => {
   const staleAfter = ['station','atmosphere','boss'].includes(view) ? 10000 : 35000;
   if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection issue'; $('connection').className = 'offline'; if (connectionHealthy) { connectionHealthy = false; render(); } }
 }, 250);
+

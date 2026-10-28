@@ -2,7 +2,7 @@
 
 First playable prototype for the October 28, 2026 department Halloween event.
 
-Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub, displays a test QR, and starts the round. Scans update a shared leaderboard. The repository includes Jebediah and the other supplied art, printable QR targets, and separate intro, leaderboard, target, and atmosphere screens.
+Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub and scan its test QR. Staff then start the round. The shared display shows the leaderboard between rounds and switches to Jebediah’s orientation when a round starts. The repository includes Jebediah and the other supplied art, printable QR targets, and target and atmosphere screens.
 
 ## Run a local trial
 
@@ -31,7 +31,7 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 2. Privately turn off the surprise PvP finale for the one-player trial. Tap **Return to welcome screen**. The player-facing setup contains no finale setting.
 3. On a scanner’s workstation, open `/?view=station`. Select its computer name; the assigned scanner color appears automatically. Enter the passphrase and connect. The browser stores a signed player token, not the staff passphrase.
 4. On the welcome/referee screen, the player enters and saves their name without unlocking Staff controls. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
-5. On a separate display, open `/?view=leaderboard`. Start the round from private staff controls.
+5. On a separate display, open `/?view=leaderboard`. It shows previous scores while idle. Start the round from private staff controls: the same display automatically switches to Jebediah’s orientation for the hunt and finale, then returns to scores when the round ends. No navigation or second display is needed.
 6. Open `/print.html?kind=ghosts` and print Ghost 1. Scan it: the player gets **100 points**. Scan it again: the score stays **100**. A second player may score that same ghost independently.
 7. End the round. **Next group** clears names and scores while keeping workstation assignments. **Reset lobby & release all** also invalidates station tokens; staff must reconnect them.
 
@@ -44,8 +44,8 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 | `/` | Staff session chooser |
 | `/?view=referee` | Landscape-friendly referee and player setup |
 | `/?view=station` | Scanner capture, with staff pairing once |
-| `/?view=leaderboard` | Live scores for a TV |
-| `/?view=intro` | Jebediah’s welcome, test QR, and readiness |
+| `/?view=leaderboard` | Shared TV display: leaderboard while idle or complete, orientation during a round |
+| `/?view=intro` | Alternate link to the same automatic leaderboard/orientation display |
 | `/?view=boss` | Pumpkin patch, then the three-hit Patch Phantom at four minutes |
 | `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
 | `/?view=atmosphere&scene=1` | Projection 1: crossing ghost drifts |
@@ -125,6 +125,7 @@ Connected scanner stations automatically use the same patch scenery during ghost
 
 The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.
 
-The lobby leaderboard ranks scores from up to 100 previous rounds, showing as many rows as fit the display and recalculating on resize. Shared history survives display reloads, Next group, station resets, and new name entry. It switches to the current group when their round starts.
+The lobby leaderboard ranks scores from up to 100 previous rounds, showing as many rows as fit the display and recalculating on resize. Shared history survives display reloads, Next group, station resets, and new name entry. Both display links switch to Jebediah’s orientation during the hunt and finale, and return to the leaderboard when the round ends. Refreshing during an active round opens orientation automatically. Switching happens in place, preserving fullscreen and enabled audio. The home screen has one combined Leaderboard & orientation tile.
 
 Name entry on the shared welcome hub needs no sign-in or staff passphrase. Players choose their color’s row and save a name in the lobby. Names lock when the round starts. Station pairing, releases, settings, and round controls remain staff-only.
+

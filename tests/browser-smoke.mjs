@@ -30,13 +30,24 @@ try {
   await station.bringToFront();await station.locator('#focus').click();
   await station.keyboard.type('TEST WAND');await station.keyboard.press('Enter');
   await ref.waitForFunction(()=>document.querySelector('#row-Red .readiness')?.textContent.includes('tested'));
-  await ref.locator('#start').click();
   await board.goto(base+'/?view=leaderboard');
+  await board.locator('#leaderboard-screen').waitFor({state:'visible'});
+  assert.equal(await board.locator('#orientation-screen').isVisible(),false);
+  await ref.locator('#start').click();
+  await board.locator('#orientation-screen').waitFor({state:'visible'});
+  assert.equal(await board.locator('#leaderboard-screen').isVisible(),false);
   await station.bringToFront();await station.locator('#focus').click();
   await station.keyboard.type('Ghost 1');await station.keyboard.press('Enter');
-  await board.waitForFunction(()=>document.querySelector('.score-row .score-value')?.textContent==='100');
+  await board.waitForFunction(()=>document.querySelector('#intro-roster')?.textContent.includes('Test Hunter'));
   await station.keyboard.type('Ghost 1');await station.keyboard.press('Enter');await board.waitForTimeout(1500);
-  assert.equal(await board.locator('.score-row .score-value').textContent(),'100');
+  const captured=await (await board.request.get(base+'/api/game')).json();
+  assert.equal(captured.state.players.find(p=>p.color==='Red').score,100);
+  await board.reload();
+  await board.locator('#orientation-screen').waitFor({state:'visible'});
+  ref.once('dialog',d=>d.accept());await ref.locator('#finish').click();
+  await board.locator('#leaderboard-screen').waitFor({state:'visible'});
+  assert.equal(await board.locator('.score-row').filter({hasText:'Test Hunter'}).first().locator('.score-value').textContent(),'100');
+  assert.equal(await board.locator('#orientation-screen').isVisible(),false);
   await ref.getByRole('button',{name:'Return to welcome screen'}).click();
   assert.equal(await ref.locator('#staff-panel').isVisible(),false);
   const publicView=await (await board.request.get(base+'/api/game')).json();
@@ -44,5 +55,6 @@ try {
   for (const page of [station,ref,board]) assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   for(const mode of ['intro','targets','atmosphere']){await board.goto(base+'/?view='+mode);await board.waitForTimeout(300);}
   assert.deepEqual(errors,[]);
-  console.log('Browser trial passed: pairing, iPhone-size referee layout, test scan, shared scoreboard, duplicate scoring, hidden controls, display modes.');
+  console.log('Browser trial passed: pairing, iPhone-size referee layout, test scan, automatic display transitions and reload, duplicate scoring, results, hidden controls, display modes.');
 } finally { await browser.close(); }
+
