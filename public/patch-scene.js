@@ -14,6 +14,37 @@ export function bossTaunt(state) {
   return BOSS_TAUNTS[Math.floor(elapsed / 6000) % BOSS_TAUNTS.length];
 }
 
+export function bossPvpTransition(previous, current) {
+  return Boolean(previous && previous.roundId === current.roundId && previous.phase === 'pve' && current.phase === 'pvp' && current.boss?.status === 'defeated');
+}
+
+export function createBossPvpAnnouncement(element, { setTimer = setTimeout, clearTimer = clearTimeout, duration = 7000 } = {}) {
+  let previous = null, timer = null;
+  const clear = () => { clearTimer(timer); timer = null; };
+  return {
+    update(current) {
+      if (bossPvpTransition(previous, current)) {
+        clear();
+        element.hidden = false;
+        element.classList.remove('boss-pvp-enter');
+        void element.offsetWidth;
+        element.classList.add('boss-pvp-enter');
+        timer = setTimer(() => { element.hidden = true; timer = null; }, duration);
+      } else if (previous?.roundId !== current.roundId || current.phase !== 'pvp') {
+        clear();
+        element.hidden = true;
+        element.classList.remove('boss-pvp-enter');
+      }
+      previous = { roundId: current.roundId, phase: current.phase };
+    },
+    destroy() { clear(); element.hidden = true; }
+  };
+}
+
+export function bossPvpAnnouncement() {
+  return `<div id="boss-pvp-announcement" class="boss-pvp-announcement" role="status" aria-live="assertive" hidden><strong>FINAL SHOWDOWN</strong><span>Scan your opponents’ chest badges!</span></div>`;
+}
+
 // Quiet scenery uses the existing patch artwork and a single code-native silhouette.
 export function patchScene() {
   return `<div class="patch-scene" aria-hidden="true"><svg class="patch-silhouette" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice"><g fill="#10111c"><path d="M0 826Q240 785 505 827T1000 820T1600 811V900H0Z"/><g transform="translate(1230 417) rotate(8)"><path d="M-7 105h14v320H-7Z"/><path d="m-122 93 236 20-2 13-237-20Z"/><path d="m-42 74 34-15 43 7 32 131-50-9-22 27-46-22Z"/><path d="m-30 181-9 74 22-6 22-52 15 56 24 10-4-76Z"/><ellipse cy="38" rx="33" ry="36"/><path d="m-63 19 128 7-2 12-128-6Zm27 5 18-70 30 17 24 57Z"/><path d="m-113 98-28-23 7 25-22 7 37 6Zm222 17 32-19-10 25 23 12-39-6Z"/></g></g></svg><div class="patch-fog"></div><div class="patch-vignette"></div></div>`;

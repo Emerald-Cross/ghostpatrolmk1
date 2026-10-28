@@ -2,7 +2,7 @@ import { createScanner } from '/scanner.js?v=display-fix-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
 import { icon } from '/icons.js?v=display-fix-20261028-1';
 import { createGameAudio } from '/audio.js?v=display-fix-20261028-1';
-import { patchScene, bossGhost, bossThanks, updateBoss } from '/patch-scene.js?v=display-fix-20261028-1';
+import { patchScene, bossGhost, bossThanks, updateBoss, createBossPvpAnnouncement, bossPvpAnnouncement } from '/patch-scene.js?v=boss-pvp-announcement-20261028-1';
 import { mountAtmosphere } from '/atmosphere.js?v=display-fix-20261028-1';
 
 const stationColors = {
@@ -29,7 +29,7 @@ let state = null, lastGood = 0, offset = 0, staffOpen = false, connectionHealthy
 let staffToken = sessionStorage.getItem('gp-staff') || '';
 let playerToken = localStorage.getItem('gp-player') || '';
 let feedback = 'Ready for your next scan.', busy = false, pendingPoll = false;
-let projection, projectionPhase, announcementTimer, controlsTimer;
+let projection, projectionPhase, announcementTimer, controlsTimer, bossAnnouncement;
 const audio = createGameAudio({ music: ['atmosphere','boss','leaderboard','intro'].includes(view), onChange(active) {
   const button = $('sound-toggle');
   if (button) { button.textContent = active ? 'Sound on' : 'Enable sound'; button.setAttribute('aria-pressed', String(active)); }
@@ -128,7 +128,7 @@ function shell() {
     projection = mountAtmosphere($('projection'), scene);
   } else if (view === 'boss') {
     document.body.classList.add('cinematic');
-    app.innerHTML = `${patchScene()}${bossGhost()}${bossThanks()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">BOSS BATTLE</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
+    app.innerHTML = `${patchScene()}${bossGhost()}${bossThanks()}${bossPvpAnnouncement()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">BOSS BATTLE</h1><div id="boss-health" class="boss-health" role="img" aria-label="9 of 9 health remaining">${Array.from({length:9},()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -154,7 +154,10 @@ function render() {
       projectionPhase = state.phase;
     }
   }
-  if (view === 'boss') updateBoss(document, state);
+  if (view === 'boss') {
+    bossAnnouncement.update(state);
+    updateBoss(document, state);
+  }
   if (view === 'referee') {
     $('login').hidden = !!staffToken; $('unlocked').hidden = !staffToken;
     $('pvp').disabled = !lobby;
@@ -250,6 +253,7 @@ async function poll() {
 $('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
 $('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(['atmosphere','boss','station'].includes(view) && e?.detail > 0) $('fullscreen').blur(); } };
 shell();
+if (view === 'boss') bossAnnouncement = createBossPvpAnnouncement($('boss-pvp-announcement'));
 if (sharedDisplay) window.addEventListener('resize',render);
 if (['atmosphere','boss','station'].includes(view)) {
   const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
@@ -262,7 +266,7 @@ if (soundControls && ['station','intro','leaderboard','atmosphere','boss'].inclu
   $('sound-volume').oninput = () => audio.setVolume(Number($('sound-volume').value));
   $('sound-volume').onpointerup = () => { if(['atmosphere','boss','station'].includes(view)) $('sound-volume').blur(); };
 }
-window.addEventListener('pagehide', event => { if(event.persisted) audio.disable(); else { projection?.destroy(); audio.destroy(); } });
+window.addEventListener('pagehide', event => { if(event.persisted) audio.disable(); else { projection?.destroy(); bossAnnouncement?.destroy(); audio.destroy(); } });
 connectGameUpdates(globalThis.io, poll);
 poll();
 setInterval(poll, ['station','atmosphere','boss'].includes(view) ? 2000 : 15000);

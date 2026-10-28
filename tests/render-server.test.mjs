@@ -21,7 +21,7 @@ test('Render server wiring serves health, static content, API, and private-safe 
     const health = await fetch(`${base}/healthz`);
     assert.equal(health.status, 200); assert.equal(await health.text(), 'ok');
     assert.equal(health.headers.get('x-frame-options'), 'DENY');
-    assert.match(await (await fetch(base)).text(), /Ghosts in the Materials Pumpkin Patch!/);
+    assert.match(await (await fetch(base)).text(), /<title>Save Jebediah Crow's pumpkin patch<\/title>/);
     const initial = await (await fetch(`${base}/api/game`)).json();
     assert.equal(initial.state.phase, 'lobby');
     assert.deepEqual(SocketIOServerStandin.instance.events.at(-1), { name: 'game:changed', args: [] });

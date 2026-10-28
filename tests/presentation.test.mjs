@@ -128,6 +128,29 @@ test('boss damage display keeps its QR stable, hides it after defeat, and clears
   assert.match(bossGhost(),/href="\/qr\/boss.svg"/);assert.match(patchScene(),/patch-silhouette/);
 });
 
+test('boss PvP announcement follows boss defeat, dismisses automatically, and clears with the round',async()=>{
+  const {createBossPvpAnnouncement,bossPvpAnnouncement}=await import('../public/patch-scene.js');
+  const classes=new Set(),timers=[];
+  const element={hidden:true,offsetWidth:0,classList:{add:name=>classes.add(name),remove:name=>classes.delete(name)}};
+  const announcement=createBossPvpAnnouncement(element,{duration:7000,setTimer:fn=>{timers.push(fn);return timers.length;},clearTimer:()=>{}});
+  const hunt={roundId:'one',phase:'pve',boss:{status:'active',health:1}};
+  const defeated={roundId:'one',phase:'pvp',boss:{status:'defeated',health:0,maxHealth:9,hits:Array.from({length:9},()=>({}))}};
+  announcement.update(hunt);assert.equal(element.hidden,true);
+  announcement.update(defeated);assert.equal(element.hidden,false,'the ninth-hit PvP transition reveals the boss-screen announcement');
+  assert.equal(classes.has('boss-pvp-enter'),true,'the announcement starts its entrance animation');
+  announcement.update(defeated);assert.equal(timers.length,1,'repeated PvP polls do not restart its timer');
+  timers[0]();assert.equal(element.hidden,true,'the announcement dismisses after its short interval');
+  announcement.update({roundId:'one',phase:'results',boss:{status:'defeated',health:0}});
+  announcement.update({roundId:'two',phase:'lobby',boss:{status:'waiting',health:9}});
+  assert.equal(element.hidden,true,'round end and next group leave the boss announcement cleared');
+  announcement.destroy();
+  const reloaded={hidden:true,classList:{add(){},remove(){}}};
+  createBossPvpAnnouncement(reloaded).update(defeated);
+  assert.equal(reloaded.hidden,true,'a display loaded mid-finale does not replay the announcement');
+  assert.match(bossPvpAnnouncement(),/Scan your opponents’ chest badges!/);
+  assert.match(bossPvpAnnouncement(),/role="status" aria-live="assertive"/);
+});
+
 test('bat silhouettes cross all projection scenes with finite wing motion and a still-wing reduced-motion variant',()=>{
   for(const scene of [1,2,3])for(let i=0;i<4;i++)for(const seconds of [0,1,15,40,1000]){
     const b=sampleBat(scene,i,seconds);
