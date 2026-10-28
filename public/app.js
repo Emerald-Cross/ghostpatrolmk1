@@ -1,9 +1,9 @@
-import { createScanner } from '/scanner.js?v=taunts-20261028-1';
+import { createScanner } from '/scanner.js?v=names-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=taunts-20261028-1';
-import { createGameAudio } from '/audio.js?v=taunts-20261028-1';
-import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=taunts-20261028-1';
-import { mountAtmosphere } from '/atmosphere.js?v=taunts-20261028-1';
+import { icon } from '/icons.js?v=names-20261028-1';
+import { createGameAudio } from '/audio.js?v=names-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=names-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=names-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -163,14 +163,14 @@ function render() {
       if (!row) {
         row = document.createElement('div'); row.id = `row-${color}`; row.className = 'roster-row';
         row.innerHTML = `<span class="swatch ${color.toLowerCase()}"></span><div class="roster-info"><strong>${color}</strong><small class="player-meta"></small></div><form class="name-form"><input aria-label="${color} player name" maxlength="24" placeholder="Player Name" required><button>Save</button></form><span class="readiness"></span><button class="release quiet" aria-label="Release ${color}">×</button>`;
-        row.querySelector('form').onsubmit = async e => { e.preventDefault(); const r = await staffAction('name', { color, name: row.querySelector('input').value }); if (r) toast('Name saved.'); };
+        row.querySelector('form').onsubmit = async e => { e.preventDefault(); try { await api({ action: 'name', color, name: row.querySelector('input').value }); toast('Name saved.'); } catch(e) { toast(e.message); } };
         row.querySelector('.release').onclick = () => { if (confirm(`Release the ${color} station?`)) staffAction('release', { color }); };
         $('roster').append(row);
       }
       const field = row.querySelector('input');
       if (document.activeElement !== field) field.value = p.name;
-      field.disabled = !staffToken || !lobby;
-      row.querySelector('button').disabled = !staffToken || !lobby;
+      field.disabled = !lobby;
+      row.querySelector('button').disabled = !lobby;
       row.querySelector('.release').hidden = !staffOpen || !staffToken || !lobby;
       row.querySelector('.player-meta').textContent = `${p.station}${p.connected ? '' : ' · disconnected'}`;
       row.querySelector('.readiness').textContent = p.vanquished ? 'Ghost vanquished!' : p.ready ? '✓ Blaster tested' : 'Test blaster';

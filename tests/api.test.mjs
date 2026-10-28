@@ -22,7 +22,8 @@ test('HTTP multi-session trial: setup, scan, shared scoreboard, secrecy, reset',
     await call({action:'settings',pvpEnabled:false},admin);
     const joined=(await call({action:'claim',color:'Red',station:'studentprimary'},admin)).body;
     const token=joined.token; const roundId=joined.state.roundId;
-    await call({action:'name',color:'Red',name:'Matt'},admin);
+    const named=await call({action:'name',color:'Red',name:'Matt'});
+    assert.equal(named.status,200);assert.equal(named.body.state.players[0].name,'Matt');
     await call({action:'scan',payload:'TEST WAND',roundId,eventId:'wand-test-1'},token);
     await call({action:'start'},admin);now=2000;
     const hit={action:'scan',payload:'Ghost 1',eventId:'scan-event-1',roundId,clientAt:performance.timeOrigin+performance.now(),clientMono:performance.now()};

@@ -2,7 +2,7 @@
 
 First playable prototype for the October 28, 2026 department Halloween event.
 
-Staff connect each scanner workstation once. The referee enters player names on an iPhone, displays a test QR, and starts the round. Scans update a shared leaderboard. The repository includes Jebediah and the other supplied art, printable QR targets, and separate intro, leaderboard, target, and atmosphere screens.
+Staff connect each scanner workstation once. Players enter their own names at the shared welcome hub, displays a test QR, and starts the round. Scans update a shared leaderboard. The repository includes Jebediah and the other supplied art, printable QR targets, and separate intro, leaderboard, target, and atmosphere screens.
 
 ## Run a local trial
 
@@ -30,7 +30,7 @@ For an iPhone or another workstation, use the host computer’s LAN IP and port 
 1. Open `/?view=referee` on the iPhone. Tap **Staff controls** and unlock with your passphrase.
 2. Privately turn off the surprise PvP finale for the one-player trial. Tap **Return to welcome screen**. The player-facing setup contains no finale setting.
 3. On a scanner’s workstation, open `/?view=station`. Select its computer name; the assigned scanner color appears automatically. Enter the passphrase and connect. The browser stores a signed player token, not the staff passphrase.
-4. On the referee screen, enter and save the player’s name. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
+4. On the welcome/referee screen, the player enters and saves their name without unlocking Staff controls. Scan the displayed **Wand check** code. Its status should become **Wand tested**.
 5. On a separate display, open `/?view=leaderboard`. Start the round from private staff controls.
 6. Open `/print.html?kind=ghosts` and print Ghost 1. Scan it: the player gets **100 points**. Scan it again: the score stays **100**. A second player may score that same ghost independently.
 7. End the round. **Next group** clears names and scores while keeping workstation assignments. **Reset lobby & release all** also invalidates station tokens; staff must reconnect them.
@@ -126,3 +126,5 @@ Connected scanner stations automatically use the same patch scenery during ghost
 The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.
 
 The lobby leaderboard ranks scores from up to 100 previous rounds, showing as many rows as fit the display and recalculating on resize. Shared history survives display reloads, Next group, station resets, and new name entry. It switches to the current group when their round starts.
+
+Name entry on the shared welcome hub needs no sign-in or staff passphrase. Players choose their color’s row and save a name in the lobby. Names lock when the round starts. Station pairing, releases, settings, and round controls remain staff-only.

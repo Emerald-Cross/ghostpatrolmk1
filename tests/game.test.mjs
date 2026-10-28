@@ -203,3 +203,17 @@ test('score history retains multiple rounds once each across lobby resets',()=>{
   const legacy={...next,scoreHistory:undefined};
   assert.equal(publicState(legacy,3600).scoreHistory.length,1,'previous single-round snapshots remain usable');
 });
+
+test('players can name themselves at the public hub in lobby while staff actions stay protected',()=>{
+  const s=initialState(),publicAuth={role:'public'};
+  apply(s,'settings',{pvpEnabled:false},ref,1000);
+  const auth=apply(s,'claim',{color:'Red',station:'studentprimary'},ref,1000).token;
+  apply(s,'name',{color:'Red',name:'  My Own Name  '},publicAuth,1001);
+  assert.equal(s.players.Red.name,'My Own Name');
+  for(const name of ['', 'x'.repeat(25),'Bad\nName'])assert.throws(()=>apply(s,'name',{color:'Red',name},publicAuth,1002),/visible characters/);
+  assert.throws(()=>apply(s,'name',{color:'Blue',name:'No Station'},publicAuth,1002),/not joined/);
+  for(const action of ['start','finish','reset','newRound','release','settings','claim'])assert.throws(()=>apply(s,action,{},publicAuth,1003),/Referee/);
+  scan(s,auth,'TEST WAND',1004);apply(s,'start',{},ref,1005);
+  assert.throws(()=>apply(s,'name',{color:'Red',name:'Mid Game'},publicAuth,1006),/lobby/);
+  assert.equal(s.players.Red.name,'My Own Name');
+});
