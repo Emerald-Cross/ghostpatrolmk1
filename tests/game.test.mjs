@@ -114,3 +114,57 @@ test('signed roles expire and cannot be tampered with', () => {
   assert.throws(()=>verifyToken(token+'x','test signing secret',1001),/expired/);
   assert.throws(()=>verifyToken(token,'test signing secret',86401000),/expired/);
 });
+
+test('boss appears at four minutes, accepts three shared hits, rejects repeats, and awards exactly 300 points', () => {
+  const {s,auth}=setup();const at=s.startedAt+240000;
+  assert.deepEqual(parseScan('Boss Ghost'),{kind:'boss'});
+  assert.equal(publicState(s,at-1).boss.status,'waiting');
+  assert.equal(scan(s,auth.Red,'Boss Ghost',at-1).result,'Boss is not available.');
+  assert.equal(publicState(s,at).boss.status,'active');
+  assert.equal(scan(s,auth.Red,'Boss Ghost',at,'boss-hit-first').result,'Boss hit! +100');
+  assert.equal(scan(s,auth.Red,'Boss Ghost',at+1,'boss-hit-first').result,'Duplicate delivery ignored.');
+  assert.match(scan(s,auth.Red,'Boss Ghost',at+1199).result,/recharging/);
+  assert.equal(scan(s,auth.Blue,'Boss Ghost',at+1199).result,'Boss hit! +100','another hunter can hit immediately');
+  assert.equal(publicState(s,at+1199).boss.health,1);
+  assert.equal(scan(s,auth.Red,'Boss Ghost',at+1200).result,'Boss vanquished! +100');
+  const boss=publicState(s,at+1200).boss;
+  assert.equal(boss.health,0);assert.equal(boss.status,'defeated');assert.equal(boss.hits.length,3);
+  assert.deepEqual(boss.hits.map(h=>h.color),['Red','Blue','Red']);
+  assert.equal(boss.defeatedAt,at+1200);
+  assert.equal(scan(s,auth.Blue,'Boss Ghost',at+2400).result,'Boss already vanquished!');
+  assert.equal(s.players.Red.score+s.players.Blue.score,300);
+  assert.equal(s.players.Red.captured.length,0,'boss damage does not inflate ordinary ghost captures');
+});
+
+test('boss closes at PvP, lasts to the buzzer without PvP, and resets cleanly across groups and old stored state', () => {
+  for(const enabled of [true,false]){
+    const {s,auth}=setup(enabled);const start=s.startedAt;
+    scan(s,auth.Red,'Boss Ghost',start+240000);
+    scan(s,auth.Blue,'Boss Ghost',start+300000);
+    assert.equal(s.boss.hits.length,enabled?1:2);
+    assert.equal(publicState(s,start+300000).boss.status,enabled?'waiting':'active');
+    scan(s,auth.Red,'Boss Ghost',s.endsAt);assert.equal(s.phase,'results');
+    assert.equal(s.boss.hits.length,enabled?1:2,'buzzer rejects boss damage');
+    const next=apply(s,'newRound',{},ref,s.endsAt+1).replacement;
+    assert.equal(next.boss.hits.length,0);assert.equal(next.boss.defeatedAt,null);assert.equal(publicState(next,s.endsAt+1).boss.status,'waiting');
+    delete next.boss;tick(next,s.endsAt+2);assert.deepEqual(next.boss,{hits:[],defeatedAt:null});
+  }
+});
+
+test('boss rejects old round deliveries, eliminated hunters, and scans in lobby', () => {
+  const {s,auth}=setup(false,1);const at=s.startedAt+240000;
+  const data={payload:'Boss Ghost',eventId:'old-boss-hit',roundId:'old-round'};
+  assert.equal(apply(s,'scan',data,auth.Red,at).result,'Old round ignored.');
+  s.players.Red.vanquished=true;
+  assert.equal(scan(s,auth.Red,'Boss Ghost',at+1).result,'Scan ignored outside active play.');
+  const next=apply(s,'newRound',{},ref,at+2).replacement;
+  assert.equal(scan(next,auth.Red,'Boss Ghost',at+3).result,'Scan ignored outside active play.');
+  assert.equal(next.boss.hits.length,0);
+});
+
+test('scanner delivers the boss code from keyboard input once per Enter terminator', () => {
+  const hits=[];let now=0;const scanner=createScanner(value=>hits.push(value),()=>now);
+  for(const key of 'Boss Ghost'){scanner({key});now+=5;}
+  scanner({key:'Enter'});scanner({key:'Enter'});
+  assert.deepEqual(hits,['Boss Ghost']);
+});

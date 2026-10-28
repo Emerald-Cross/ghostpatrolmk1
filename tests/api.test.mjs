@@ -71,3 +71,33 @@ test('Supabase adapter protocol, CAS conflict retry and service key isolation',a
   assert.ok(seen.every(r=>r.headers.apikey==='sb_secret_test'&&!r.headers.Authorization));
   assert.equal((await store.read()).data.phase,initialState().phase);
 });
+
+test('HTTP simultaneous boss blasts settle to three shared hits, 300 points, and matching display state',async()=>{
+  let now=1000;
+  const handler=createHandler({store:memoryStore(),refereeSecret:'test-referee-passphrase',sessionSecret:'test-session-secret-32-characters-long',clock:()=>now});
+  const server=http.createServer(handler);await new Promise(r=>server.listen(0,'127.0.0.1',r));
+  const base=`http://127.0.0.1:${server.address().port}`;
+  const call=async(body,token)=>{
+    const response=await fetch(base,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(token?{Authorization:`Bearer ${token}`}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    assert.equal(response.status,200);return response.json();
+  };
+  try{
+    const {token:admin}=await call({action:'login',secret:'test-referee-passphrase'});
+    const hunters=[];let roundId;
+    for(const [color,station] of Object.entries({Black:'joshdesk',White:'barbdesk',Blue:'center',Red:'studentprimary'})){
+      const joined=await call({action:'claim',color,station},admin);roundId=joined.state.roundId;hunters.push({color,token:joined.token});
+      await call({action:'name',color,name:color},admin);
+      await call({action:'scan',payload:'TEST WAND',roundId,eventId:`test-boss-${color}`},joined.token);
+    }
+    const start=await call({action:'start'},admin);now=start.state.startedAt+240000;
+    const before=await call();assert.equal(before.state.boss.status,'active');
+    await Promise.all(hunters.map(({color,token})=>call({action:'scan',payload:'Boss Ghost',roundId,eventId:`boss-concurrent-${color}`},token)));
+    const display=await call(),station=await call({action:'heartbeat'},hunters[0].token);
+    assert.deepEqual(display.state.boss,station.state.boss);
+    assert.equal(display.state.boss.health,0);assert.equal(display.state.boss.hits.length,3);
+    assert.equal(display.state.players.reduce((total,p)=>total+p.score,0),300);
+    assert.equal('pvpEnabled' in display.state,false);
+    await call({action:'newRound'},admin);const reset=await call();
+    assert.equal(reset.state.boss.status,'waiting');assert.equal(reset.state.boss.health,3);
+  }finally{await new Promise(r=>server.close(r));}
+});

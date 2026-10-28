@@ -46,6 +46,7 @@ Keep the scanner browser focused. The page displays an inactive-window warning; 
 | `/?view=station` | Scanner capture, with staff pairing once |
 | `/?view=leaderboard` | Live scores for a TV |
 | `/?view=intro` | Jebediah’s welcome, test QR, and readiness |
+| `/?view=boss` | Pumpkin patch, then the three-hit Patch Phantom at four minutes |
 | `/?view=targets` | Ghosts 16–18, stationary for scan reliability |
 | `/?view=atmosphere&scene=1` | Projection 1: crossing ghost drifts |
 | `/?view=atmosphere&scene=2` | Projection 2: a flowing ghost current |
@@ -60,6 +61,7 @@ Use the full screen button on desktop. iPhone Safari support must be verified on
 
 - Six paired scanner workstations, in order: `joshdesk` = Black, `barbdesk` = White, `center` = Blue, `studentprimary` = Red, `north` = Yellow, `east` = Green. The station page selects the assigned color automatically.
 - Each `Ghost 1` through `Ghost 18` awards **100 points once per player per round**. No cooldown between different players.
+- At **four minutes**, the Patch Phantom appears on the boss screen. Its `Boss Ghost` code accepts **three shared hits total**, awarding **100 points per hit** to the hunter who fires. One hunter can deliver all three, with a **1.2-second rearm** between their accepted hits; different hunters can hit immediately. Health, cracks, and the last hunter’s name update on all boss displays. The code disappears when defeated. It becomes unavailable during PvP or at the round deadline. **Next group** restores full health.
 - PvP enabled: five minutes of ghost hunting, then a one-minute surprise finale. Disabled: six minutes of ghost hunting. Setup happens before the timer starts.
 - Only a referee can set the finale, and only in the lobby. Public state never contains that setting. Public countdowns show the same six-minute total either way.
 - In PvP, scanning `Player Red` (or another active opponent’s badge) eliminates that player and transfers their entire current score to the attacker. Further scans by eliminated players cannot score.
@@ -114,3 +116,11 @@ Open one of the three atmosphere URLs on each projector and select **Full screen
 Select **Enable sound** on one device (an atmosphere, intro, or leaderboard screen) to play the background score and game effects. The slider controls volume. Sound starts only after that gesture and starts muted after navigation or reload. A scanner station can enable local scan effects without background music. The western sting runs once on entry into PvP; historical captures do not replay when a display joins. All music is synthesized locally from original code, with no external music services or recordings.
 
 Print `/print.html?kind=ghosts` on letter paper at 100% scale. Each page is one ghost: cut along its dashed outside outline, keeping the face and QR code together. The original QR data and white quiet zones are retained; the new QR canvas is about 5.2 inches wide. Test a printed cutout with the actual scanner before printing the full set.
+
+## Boss and scanner scenery
+
+Open `/?view=boss` on a dedicated display before the round. Until four minutes have elapsed, it shows only the quiet patch, a scarecrow silhouette, and slowly moving fog after the shared header fades. Move the pointer, tap, or press Tab to restore full-screen and sound controls. The boss drifts slowly across a two-minute sweep with an upright, unfiltered QR and a four-module white quiet zone. Each hit consumes one health segment and adds visible damage; after the third, the ghost fades away and the vanquished message remains. Multiple displays reflect the same encounter, rather than creating extra bosses.
+
+Connected scanner stations automatically use the same patch scenery during ghost hunting and PvP. Their small bottom strip shows identity, the most recent scan result, and focus/connection status. The pairing form and blaster illustration return outside gameplay. Inactive-window and connection warnings stay visible in the strip; the scenery does not interfere with keyboard scanner capture. PvP warms the scene tint. Motion is reduced for devices requesting reduced motion.
+
+The boss display also supports the existing user-activated room music, hit effects, and western PvP sting. Enable room sound on only one display. Scanner stations keep local scan feedback effects. No new database schema or external assets are required.

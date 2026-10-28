@@ -21,7 +21,7 @@ for name, dest in names.items():
 
 payloads = [(f'ghost-{i}', f'Ghost {i}') for i in range(1, 19)]
 payloads += [(f'player-{color.lower()}', f'Player {color}') for color in ['Red','Green','Blue','Yellow','White','Black']]
-payloads += [('test', 'TEST WAND')]
+payloads += [('test', 'TEST WAND'), ('boss', 'Boss Ghost')]
 for name, payload in payloads:
     qr = qrencoder.QRCode(1, qrencoder.QRErrorCorrectLevel.M)
     qr.addData(payload)

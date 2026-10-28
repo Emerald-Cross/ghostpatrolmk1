@@ -40,3 +40,12 @@
 - [ ] Open scenes 1, 2, and 3 on the actual projectors, use full screen, and let the controls fade.
 - [ ] Confirm all three scenes change when the actual game enters PvP; confirm a finale-disabled round stays in the hunt mood.
 - [ ] Print one ghost at 100%, cut on the dashed outline, and scan it at the planned distance before printing all 15.
+
+## Boss encounter and scanner ambience
+
+1. Open `/?view=boss` before a trial. Let the controls fade: only the pumpkin patch, scarecrow silhouette, and subtle fog should remain.
+2. Start a round. Confirm paired scanner stations switch to scenery and a minimal status strip; switch away from a station’s browser to check its focus warning, then restore focus.
+3. At four minutes, verify the boss appears and drifts slowly with a clear upright code. Scan it once: one health segment disappears, damage appears, and the hunter gains 100 points.
+4. Scan twice more, allowing at least 1.2 seconds between accepted hits from the same blaster. Different hunters may contribute immediately. Confirm only three hits score, the total bonus is 300, the code disappears, and the boss fades.
+5. In a separate trial, leave the boss alive: it must stop accepting hits when PvP begins at five minutes. With finale disabled, it remains active until the six-minute deadline.
+6. Choose Next group: health and damage must reset, with the patch alone visible again. Verify the projector’s physical scan range and that the small station strip remains readable.

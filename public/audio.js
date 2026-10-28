@@ -118,8 +118,9 @@ export function createGameAudio({ music = false, events = music, onChange = () =
       if(!seen.has(key)){seen.add(key);if(!first)fresh.push(entry.message);}
     }
     if(seen.size>120){seen.clear();for(const entry of state.log||[])seen.add(`${entry.at}:${entry.message}`);}
-    if(events && fresh.some(s=>s.includes('captured Ghost')))effect('capture');
-    if(events && fresh.some(s=>s.includes('vanquished')||s.includes('Both Vanquished')))effect('vanquished');
+    if(events && fresh.some(s=>s.includes('captured Ghost')||s.includes('hit the boss ghost')))effect('capture');
+    if(events && fresh.some(s=>s.includes('vanquished the boss ghost')))effect('finish');
+    if(events && fresh.some(s=>(s.includes('vanquished')&&!s.includes('boss ghost'))||s.includes('Both Vanquished')))effect('vanquished');
   }
   return { enable, disable, update, effect, get enabled(){return enabled;}, setVolume(value){volume=Math.max(0,Math.min(1,Number(value)||0));if(ctx&&enabled)master.gain.setTargetAtTime(volume*.7,ctx.currentTime,.03);}, destroy(){disable();ctx?.close();} };
 }

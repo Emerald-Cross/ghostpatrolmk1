@@ -1,8 +1,9 @@
-import { createScanner } from '/scanner.js';
+import { createScanner } from '/scanner.js?v=boss-20261028-1';
 import { connectGameUpdates } from '/realtime.js';
-import { icon } from '/icons.js?v=haunt-20261027-1';
-import { createGameAudio } from '/audio.js?v=haunt-20261027-1';
-import { mountAtmosphere } from '/atmosphere.js?v=haunt-20261027-1';
+import { icon } from '/icons.js?v=boss-20261028-1';
+import { createGameAudio } from '/audio.js?v=boss-20261028-1';
+import { patchScene, bossGhost, updateBoss } from '/patch-scene.js?v=boss-20261028-1';
+import { mountAtmosphere } from '/atmosphere.js?v=boss-20261028-1';
 
 const stationColors = {
   joshdesk: 'Black',
@@ -22,12 +23,12 @@ const scene = [1,2,3].includes(requestedScene) ? requestedScene : 1;
 document.body.classList.add(`${view}-view`);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const options = items => items.map((s,i) => `<option value="${esc(s)}"${i === 0 ? ' selected' : ''}>${esc(s)}</option>`).join('');
-let state = null, lastGood = 0, offset = 0, staffOpen = false;
+let state = null, lastGood = 0, offset = 0, staffOpen = false, connectionHealthy = false, stationRound;
 let staffToken = sessionStorage.getItem('gp-staff') || '';
 let playerToken = localStorage.getItem('gp-player') || '';
 let feedback = 'Ready for your next scan.', busy = false, pendingPoll = false;
 let projection, projectionPhase, announcementTimer, controlsTimer;
-const audio = createGameAudio({ music: ['atmosphere','leaderboard','intro'].includes(view), onChange(active) {
+const audio = createGameAudio({ music: ['atmosphere','boss','leaderboard','intro'].includes(view), onChange(active) {
   const button = $('sound-toggle');
   if (button) { button.textContent = active ? 'Sound on' : 'Enable sound'; button.setAttribute('aria-pressed', String(active)); }
 } });
@@ -41,7 +42,7 @@ async function api(data, token = '') {
   });
   const result = await response.json();
   if (!response.ok) { const error = new Error(result.error || 'Request failed.'); error.status = response.status; throw error; }
-  lastGood = Date.now();
+  lastGood = Date.now(); connectionHealthy = true;
   if (result.state) {
     state = result.state; offset = state.serverNow - (start + Date.now()) / 2;
     audio.update(state);
@@ -69,7 +70,8 @@ function shell() {
         launchTile('leaderboard', 'trophy', 'Live leaderboard', 'Show Leaderboard'),
         launchTile('intro', 'pumpkin', 'Meet Jebediah', 'Orientation and testing'),
         launchTile('targets', 'target', 'Digital ghosts', 'Three stationary targets for a screen or projector.'),
-        launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.')
+        launchTile('atmosphere', 'moon', 'Atmosphere', 'Three looping projection scenes.'),
+        launchTile('boss', 'ghost', 'Boss ghost', 'A late-round phantom. Three hits to vanquish.')
       ].join('')}</section><p class="footnote"><a href="/print.html">${icon('printer')}Print ghost targets, chest badges, or a test target</a></p>`;
   } else if (view === 'referee') {
     app.innerHTML = `<section class="referee-top"><div><p class="eyebrow">WELCOME TO THE OIT MATERIALS MANAGEMENT HALLOWEEN PUMPKIN PATCH</p><h1>You are professional ghost busters!</h1><p>Enter your name and test your blaster</p></div><button id="staff-toggle" class="quiet">Staff controls</button></section>
@@ -89,7 +91,7 @@ function shell() {
     $('new-round').onclick = () => { if (confirm('Clear names and scores for the next group? Station connections will stay assigned.')) staffAction('newRound'); };
     $('reset').onclick = () => { if (confirm('Release every color and disconnect all wand stations?')) staffAction('reset'); };
   } else if (view === 'station') {
-    app.innerHTML = `<section class="station"><div class="station-head"><p class="eyebrow">NEUTRON BLASTER LINK</p><h1 id="station-title">Connect your blaster</h1></div><div class="station-stage"><div class="station-art"><img src="/assets/scanner.webp" alt="Glowing neutron blaster" width="650" height="650"></div><section id="pair-panel" class="panel"><p>Select this computer. Its assigned scanner color is shown automatically. Players will enter names at hub device.</p><form id="pair"><label>Computer<select id="station">${options(stations)}</select></label><label>Scanner color<input id="color" readonly></label><label>Staff password<input id="pair-secret" type="password" required autocomplete="current-password"></label><button>${icon('link', 'icon-small')}Connect station</button></form></section><div id="linked" class="panel" hidden><p id="station-name" class="station-name"></p><p id="scanner-feedback" class="scan-feedback" aria-live="polite"></p><p id="focus-note" class="tag"></p><div class="station-actions"><button id="focus" class="quiet">${icon('target', 'icon-small')}Arm your scanner</button><button id="leave" class="quiet">Leave station</button></div><p class="muted">Keep this browser window active.</p></div></div></section>`;
+    app.innerHTML = `<div id="station-scenery" hidden>${patchScene()}</div><section class="station"><div class="station-head"><p class="eyebrow">NEUTRON BLASTER LINK</p><h1 id="station-title">Connect your blaster</h1></div><div class="station-stage"><div class="station-art"><img src="/assets/scanner.webp" alt="Glowing neutron blaster" width="650" height="650"></div><section id="pair-panel" class="panel"><p>Select this computer. Its assigned scanner color is shown automatically. Players will enter names at hub device.</p><form id="pair"><label>Computer<select id="station">${options(stations)}</select></label><label>Scanner color<input id="color" readonly></label><label>Staff password<input id="pair-secret" type="password" required autocomplete="current-password"></label><button>${icon('link', 'icon-small')}Connect station</button></form></section><div id="linked" class="panel" hidden><p id="station-name" class="station-name"></p><p id="scanner-feedback" class="scan-feedback" aria-live="polite"></p><p id="focus-note" class="tag"></p><div class="station-actions"><button id="focus" class="quiet">${icon('target', 'icon-small')}Arm your scanner</button><button id="leave" class="quiet">Leave station</button></div><p class="muted">Keep this browser window active.</p></div></div></section>`;
     $('station').onchange = () => { $('color').value = stationColors[$('station').value]; };
     $('color').value = stationColors[$('station').value];
     $('pair').onsubmit = async e => {
@@ -107,8 +109,8 @@ function shell() {
     const scanner = createScanner(async (payload, clientMono) => {
       if (!playerToken || !state) return;
       const event = { action: 'scan', payload, roundId: state.roundId, eventId: crypto.randomUUID(), clientMono, clientAt: performance.timeOrigin + clientMono };
-      try { const r = await api(event, playerToken); feedback = r.result || 'Scan received.'; if (r.result === 'Wand tested!') audio.effect('ready'); else if (r.result === 'Ghost captured! +100') audio.effect('capture'); else if (r.result === 'Blast registered.') audio.effect('vanquished'); render(); }
-      catch(e) { feedback = 'Scan not confirmed. Check connection, then scan again.'; toast(e.message); render(); }
+      try { const r = await api(event, playerToken); feedback = r.result || 'Scan received.'; if (r.result === 'Wand tested!') audio.effect('ready'); else if (['Ghost captured! +100','Boss hit! +100'].includes(r.result)) audio.effect('capture'); else if (r.result === 'Boss vanquished! +100') audio.effect('finish'); else if (r.result === 'Blast registered.') audio.effect('vanquished'); render(); }
+      catch(e) { connectionHealthy = false; feedback = 'Scan not confirmed. Check connection, then scan again.'; toast(e.message); render(); }
     });
     document.addEventListener('keydown', e => {
       if (!playerToken || e.target.closest('input,select,textarea')) return;
@@ -125,8 +127,9 @@ function shell() {
     document.body.classList.add('atmosphere');
     app.innerHTML = `<canvas id="projection" role="img" aria-label="Looping ghosts in the pumpkin patch"></canvas><div id="projection-announcement" class="projection-announcement" role="status" hidden><strong>FINAL SHOWDOWN</strong><span>Ghosts have possessed your fellow hunters! BLAST THEM!</span></div><nav class="projection-controls" aria-label="Projection scenes"><div class="projection-scenes">${['Drift','Current','Whirl'].map((name,i)=>`<a href="/?view=atmosphere&scene=${i+1}"${scene===i+1?' aria-current="page"':''}>${i+1} · ${name}</a>`).join('')}</div><span id="projection-status">Connecting…</span><small>Move the pointer or tap to show controls. Enable sound on one device.</small></nav>`;
     projection = mountAtmosphere($('projection'), scene);
-    const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
-    document.addEventListener('pointermove',showControls); document.addEventListener('pointerdown',showControls); document.addEventListener('keydown',showControls); showControls();
+  } else if (view === 'boss') {
+    document.body.classList.add('cinematic');
+    app.innerHTML = `${patchScene()}${bossGhost()}<section id="boss-hud" class="boss-hud" role="status" aria-live="polite" hidden><h1 id="boss-heading">THE PATCH PHANTOM</h1><div id="boss-health" class="boss-health" role="img" aria-label="3 of 3 health remaining">${[1,2,3].map(()=>'<span class="boss-heart" aria-hidden="true"></span>').join('')}</div><p id="boss-status"></p></section>`;
   } else { app.innerHTML = '<h1>Session not found.</h1><a href="/">Choose a session</a>'; }
 }
 function playerColor() {
@@ -145,6 +148,7 @@ function render() {
       projectionPhase = state.phase;
     }
   }
+  if (view === 'boss') updateBoss(document, state);
   if (view === 'referee') {
     $('login').hidden = !!staffToken; $('unlocked').hidden = !staffToken;
     $('pvp').disabled = !lobby;
@@ -176,13 +180,20 @@ function render() {
   }
   if (view === 'station') {
     const p = state.players.find(p => p.color === playerColor());
+    if (stationRound !== state.roundId) { stationRound = state.roundId; feedback = 'Ready for your next scan.'; }
+    const playing = !!p && ['pve','pvp'].includes(state.phase);
+    document.body.classList.toggle('station-playing', playing);
+    document.body.classList.toggle('cinematic', playing);
+    document.body.classList.toggle('scanner-unfocused', !document.hasFocus());
+    document.body.classList.toggle('station-connection-issue', !connectionHealthy);
+    $('station-scenery').hidden = !playing;
     $('pair-panel').hidden = !!playerToken; $('linked').hidden = !playerToken;
     $('station-title').textContent = playerToken ? `${p?.color || 'Your'} blaster connected.` : 'Connect your blaster';
     if (playerToken) {
       $('linked').dataset.ready = String(!!p?.ready);
       $('station-name').textContent = `${p?.name || 'Name entry at hub'} · ${p?.station || 'Reconnecting'}`;
       $('scanner-feedback').textContent = p?.vanquished ? 'Vanquished! Good Job!' : feedback;
-      $('focus-note').textContent = document.hasFocus() ? '● Scanner capture armed' : '⚠ Window inactive · restore focus';
+      $('focus-note').textContent = !connectionHealthy ? 'Connection issue · scans unconfirmed' : document.hasFocus() ? '● Scanner capture armed' : '⚠ Window inactive · restore focus';
     }
   }
   if (view === 'intro') {
@@ -217,31 +228,36 @@ async function poll() {
     if (view === 'station' && playerToken) await api({ action: 'heartbeat' }, playerToken);
     else await api(null, view === 'referee' && staffOpen ? staffToken : '');
   } catch(e) {
+    connectionHealthy = false;
     $('connection').textContent = 'Connection issue'; $('connection').className = 'offline';
     if (e.status === 401) {
       if (view === 'station') { playerToken = ''; localStorage.removeItem('gp-player'); }
       else { staffToken = ''; sessionStorage.removeItem('gp-staff'); }
-      render();
     }
+    render();
   } finally {
     busy = false;
     if (pendingPoll) { pendingPoll = false; queueMicrotask(poll); }
   }
 }
 $('fullscreen').innerHTML = icon('fullscreen') + 'Full screen';
-$('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(view === 'atmosphere' && e?.detail > 0) $('fullscreen').blur(); } };
+$('fullscreen').onclick = async e => { try { if (document.fullscreenElement) await document.exitFullscreen(); else if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen(); else toast('On iPhone: Share → Add to Home Screen for an app-like display.'); } catch { toast('Full screen unavailable here. Try Add to Home Screen on iPhone.'); } finally { if(['atmosphere','boss','station'].includes(view) && e?.detail > 0) $('fullscreen').blur(); } };
 shell();
+if (['atmosphere','boss','station'].includes(view)) {
+  const showControls = () => { document.body.classList.add('projection-ui-visible'); clearTimeout(controlsTimer); controlsTimer = setTimeout(()=>document.body.classList.remove('projection-ui-visible'),6500); };
+  document.addEventListener('pointermove',showControls); document.addEventListener('pointerdown',showControls); document.addEventListener('keydown',e=>{ if (e.key === 'Tab' || e.key === 'Escape') showControls(); }); showControls();
+}
 const soundControls = $('sound-controls');
-if (soundControls && ['station','intro','leaderboard','atmosphere'].includes(view)) {
+if (soundControls && ['station','intro','leaderboard','atmosphere','boss'].includes(view)) {
   soundControls.hidden = false;
-  $('sound-toggle').onclick = async event => { $('sound-toggle').disabled = true; try { if (audio.enabled) audio.disable(); else await audio.enable(); } catch(e) { toast(e.message || 'Tap Enable sound to try again.'); } finally { $('sound-toggle').disabled = false; if(view === 'atmosphere' && event?.detail > 0) $('sound-toggle').blur(); } };
+  $('sound-toggle').onclick = async event => { $('sound-toggle').disabled = true; try { if (audio.enabled) audio.disable(); else await audio.enable(); } catch(e) { toast(e.message || 'Tap Enable sound to try again.'); } finally { $('sound-toggle').disabled = false; if(['atmosphere','boss','station'].includes(view) && event?.detail > 0) $('sound-toggle').blur(); } };
   $('sound-volume').oninput = () => audio.setVolume(Number($('sound-volume').value));
-  $('sound-volume').onpointerup = () => { if(view === 'atmosphere') $('sound-volume').blur(); };
+  $('sound-volume').onpointerup = () => { if(['atmosphere','boss','station'].includes(view)) $('sound-volume').blur(); };
 }
 window.addEventListener('pagehide', event => { if(event.persisted) audio.disable(); else { projection?.destroy(); audio.destroy(); } });
 connectGameUpdates(globalThis.io, poll);
 poll();
-setInterval(poll, ['station','atmosphere'].includes(view) ? 2000 : 15000);
+setInterval(poll, ['station','atmosphere','boss'].includes(view) ? 2000 : 15000);
 setInterval(() => {
   if ($('clock') && state) {
     const ms = state.phase === 'lobby' ? 360000 : state.phase === 'results' ? 0 : Math.max(0, state.endsAt - (Date.now() + offset));
@@ -251,6 +267,6 @@ setInterval(() => {
   // Referee and display views intentionally poll every 15 seconds when no
   // Socket.IO event arrives. Allow two poll intervals plus some jitter before
   // declaring the connection stale; stations heartbeat every 2 seconds.
-  const staleAfter = ['station','atmosphere'].includes(view) ? 10000 : 35000;
-  if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection issue'; $('connection').className = 'offline'; }
+  const staleAfter = ['station','atmosphere','boss'].includes(view) ? 10000 : 35000;
+  if (lastGood && Date.now() - lastGood > staleAfter) { $('connection').textContent = 'Connection issue'; $('connection').className = 'offline'; if (connectionHealthy) { connectionHealthy = false; render(); } }
 }, 250);

@@ -1,7 +1,7 @@
 export function parsePayload(value) {
   if (typeof value !== 'string' || value.length > 80) return null;
   const s = value.trim();
-  return s === 'TEST WAND' || /^Ghost ([1-9]|1[0-8])$/.test(s) || /^Player (Red|Green|Blue|Yellow|White|Black)$/.test(s) ? s : null;
+  return s === 'TEST WAND' || s === 'Boss Ghost' || /^Ghost ([1-9]|1[0-8])$/.test(s) || /^Player (Red|Green|Blue|Yellow|White|Black)$/.test(s) ? s : null;
 }
 export function createScanner(onScan, clock = () => performance.now()) {
   let buffer = '', last = 0;

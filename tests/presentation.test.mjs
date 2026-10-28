@@ -84,3 +84,25 @@ test('projection canvas follows live PvP state, adds ghosts, and releases its an
   }finally{projection?.destroy();for(const [key,d] of originals){if(d)Object.defineProperty(globalThis,key,d);else delete globalThis[key];}}
   assert.ok(cancelled&&removed);
 });
+
+test('boss damage display keeps its QR stable, hides it after defeat, and clears damage for the next group',async()=>{
+  const {updateBoss,bossGhost,patchScene}=await import('../public/patch-scene.js');
+  const node=()=>{const classes=new Set();return {dataset:{},style:{},hidden:true,textContent:'',attrs:{},setAttribute(k,v){this.attrs[k]=v;},classList:{add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k),toggle(k,on){if(on)classes.add(k);else classes.delete(k);}}};};
+  const ids=Object.fromEntries(['boss-float','boss-ghost','boss-hud','boss-status','boss-heading','boss-health','boss-code'].map(id=>[id,node()]));
+  const hearts=[node(),node(),node()];const document={getElementById:id=>ids[id],querySelectorAll:()=>hearts};
+  const state={roundId:'one',boss:{status:'waiting',health:3,maxHealth:3,hits:[]}};
+  updateBoss(document,state);assert.equal(ids['boss-float'].hidden,true);assert.equal(ids['boss-hud'].hidden,true);
+  state.boss.status='active';updateBoss(document,state);assert.equal(ids['boss-code'].style.visibility,'visible');
+  state.boss.health=2;state.boss.hits.push({name:'Hunter <script>'});updateBoss(document,state);
+  assert.equal(ids['boss-ghost'].dataset.damage,'1');assert.equal(ids['boss-ghost'].classList.contains('boss-hit'),true);
+  assert.match(ids['boss-status'].textContent,/Hunter <script> · 1 of 3 hits/,'player names remain text');
+  ids['boss-ghost'].classList.remove('boss-hit');updateBoss(document,state);
+  assert.equal(ids['boss-ghost'].classList.contains('boss-hit'),false,'unchanged poll does not replay damage');
+  assert.equal(hearts.filter(h=>h.classList.contains('is-spent')).length,1);
+  state.boss.health=0;state.boss.status='defeated';updateBoss(document,state);
+  assert.equal(ids['boss-code'].style.visibility,'hidden');assert.equal(ids['boss-heading'].textContent,'BOSS VANQUISHED!');
+  assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),true);
+  updateBoss(document,{roundId:'two',boss:{status:'waiting',health:3,maxHealth:3,hits:[]}});
+  assert.equal(ids['boss-float'].hidden,true);assert.equal(ids['boss-ghost'].dataset.damage,'0');assert.equal(ids['boss-ghost'].classList.contains('is-defeated'),false);
+  assert.match(bossGhost(),/href="\/qr\/boss.svg"/);assert.match(patchScene(),/patch-silhouette/);
+});
